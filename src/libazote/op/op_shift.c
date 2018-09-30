@@ -38,7 +38,7 @@ AZOTE_PROTO_R(azOpSLLV)
 {
     if (!rd) return;
 
-    uint32_t value = (uint32_t)state->cpu.registers[rt] << state->cpu.registers[rs] & 0x1f;
+    uint32_t value = (uint32_t)state->cpu.registers[rt] << (state->cpu.registers[rs] & 0x1f);
     state->cpu.registers[rd] = (int32_t)value;
 }
 
@@ -46,7 +46,7 @@ AZOTE_PROTO_R(azOpSRLV)
 {
     if (!rd) return;
 
-    uint32_t value = (uint32_t)state->cpu.registers[rt] >> state->cpu.registers[rs] & 0x1f;
+    uint32_t value = (uint32_t)state->cpu.registers[rt] >> (state->cpu.registers[rs] & 0x1f);
     state->cpu.registers[rd] = (int32_t)value;
 }
 
@@ -83,14 +83,14 @@ AZOTE_PROTO_R(azOpDSLLV)
 {
     if (!rd) return;
 
-    state->cpu.registers[rd] = state->cpu.registers[rt] << state->cpu.registers[rs] & 0x3f;
+    state->cpu.registers[rd] = state->cpu.registers[rt] << (state->cpu.registers[rs] & 0x3f);
 }
 
 AZOTE_PROTO_R(azOpDSRLV)
 {
     if (!rd) return;
 
-    state->cpu.registers[rd] = state->cpu.registers[rt] >> state->cpu.registers[rs] & 0x3f;
+    state->cpu.registers[rd] = state->cpu.registers[rt] >> (state->cpu.registers[rs] & 0x3f);
 }
 
 AZOTE_PROTO_R(azOpDSRAV)

@@ -2,6 +2,11 @@
 
 AZOTE_PROTO_COP0(azOpMTC0)
 {
+    if (rd == 12)
+    {
+        printf("STATUS !!!\n");
+        getchar();
+    }
     state->cop0.registers[rd] = state->cpu.registers[rt];
 }
 

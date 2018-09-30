@@ -2,23 +2,23 @@
 
 AZOTE_PROTO_I(azOpADDI)
 {
-    int32_t result;
+    uint32_t result;
 
-    result = (int32_t)state->cpu.registers[rs] + (int16_t)imm;
+    result = (uint32_t)state->cpu.registers[rs] + (uint32_t)((int16_t)imm);
     if (rt)
     {
-        state->cpu.registers[rt] = result;
+        state->cpu.registers[rt] = (int32_t)result;
     }
 }
 
 AZOTE_PROTO_I(azOpADDIU)
 {
-    int32_t result;
+    uint32_t result;
 
-    result = (int32_t)state->cpu.registers[rs] + (int16_t)imm;
+    result = (uint32_t)state->cpu.registers[rs] + (uint32_t)((int16_t)imm);
     if (rt)
     {
-        state->cpu.registers[rt] = result;
+        state->cpu.registers[rt] = (int32_t)result;
     }
 }
 

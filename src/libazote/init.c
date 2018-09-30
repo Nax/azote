@@ -12,6 +12,8 @@ AzState* azInit()
     state->spImem = malloc(0x1000);
     memset(state->spDmem, 0, 0x1000);
     memset(state->spImem, 0, 0x1000);
+    state->piDmaRegisters = malloc(20);
+    memset(state->piDmaRegisters, 0, 20);
     return state;
 }
 
@@ -23,6 +25,7 @@ void azExit(AzState* state)
         free(state->cart);
         free(state->spDmem);
         free(state->spImem);
+        free(state->piDmaRegisters);
     }
     free(state);
 }

@@ -11,7 +11,7 @@ static uint8_t const kInstructionTableCommonType[64] = {
     _, _, _, _, I, I, I, I,
     I, I, I, I, _, _, _, _,
     I, I, I, I, I, I, I, I,
-    I, I, _, I, _, _, _, _,
+    I, I, _, I, _, _, _, I,
     _, _, _, _, _, _, _, _,
     _, _, _, _, _, _, _, _,
 };
@@ -28,7 +28,7 @@ static void* kInstructionTableCommon[64] = {
     NULL, NULL, NULL, NULL, _(BEQL), _(BNEL), _(BLEZL), _(BGTZL),
     _(DADDI), _(DADDIU), _(LDL), _(LDR), NULL, NULL, NULL, NULL,
     _(LB), _(LH), _(LWL), _(LW), _(LBU), _(LHU), _(LWR), _(LWU),
-    _(SB), _(SH), NULL, _(SW), NULL, NULL, NULL, NULL,
+    _(SB), _(SH), NULL, _(SW), NULL, NULL, NULL, _(CACHE),
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 };
@@ -42,6 +42,13 @@ static AzProcInstructionR* const kInstructionTableSpecial[64] = {
     NULL, NULL, _(SLT), _(SLTU), _(DADD), _(DADDU), _(DSUB), _(DSUBU),
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
     _(DSLL), NULL, _(DSRL), _(DSRA), _(DSLL32), NULL, _(DSRL32), _(DSRA32),
+};
+
+static AzProcInstructionRegImm* const kInstructionTableRegImm[32] = {
+    _(BLTZ), _(BGEZ), _(BLTZL), _(BGEZL), NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    _(BLTZAL), _(BGEZAL), _(BLTZALL), _(BGEZALL), NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 };
 
 static AzProcInstructionCOP0* const kInstructionTableCOP0[32] = {
@@ -66,6 +73,17 @@ static void _execInstructionCop0(AzState* state, uint32_t opcode)
     AzProcInstructionCOP0* instr = kInstructionTableCOP0[selector];
     printf("COP0\n");
     instr(state, rt, rd);
+}
+
+static void _execInstructionRegImm(AzState* state, uint32_t opcode)
+{
+    uint8_t rs = (opcode >> 21) & 0x1f;
+    uint8_t selector = (opcode >> 16) & 0x1f;
+    uint16_t imm = opcode & 0xffff;
+
+    AzProcInstructionRegImm* instr = kInstructionTableRegImm[selector];
+    printf("REGIMM\n");
+    instr(state, rs, imm);
 }
 
 static void _execInstructionI(AzState* state, uint32_t opcode)
@@ -130,6 +148,9 @@ static void _execInstruction(AzState* state, uint32_t opcode)
     case 0x00:
         _execInstructionR(state, opcode);
         return;
+    case 0x01:
+        _execInstructionRegImm(state, opcode);
+        break;
     case 0x10:
         _execInstructionCop0(state, opcode);
         return;
@@ -144,9 +165,8 @@ void azRun(AzState* state)
     int debug = 0;
     for (;;)
     {
-        /*if ((state->cpu.pc & 0xffffffff) == 0xA400090C)
+        /* if ((state->cpu.pc & 0xffffffff) == 0x800001b4)
             debug = 1; */
-
         uint32_t opcode = azMemoryRead32(state, state->cpu.pc);
         printf("PC:  0x%016llx   Op: 0x%08x\n", state->cpu.pc, opcode);
         printf("PC2: 0x%016llx\n", state->cpu.pc2);

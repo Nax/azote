@@ -47,7 +47,7 @@ AZOTE_PROTO_I(azOpBEQL)
     }
 }
 
-AZOTE_PROTO_REGIMM(azOpBEGZ)
+AZOTE_PROTO_REGIMM(azOpBGEZ)
 {
     uint64_t addr = state->cpu.pc + ((int16_t)imm << 2);
 
@@ -55,7 +55,7 @@ AZOTE_PROTO_REGIMM(azOpBEGZ)
         state->cpu.pc2 = addr;
 }
 
-AZOTE_PROTO_REGIMM(azOpBEGZL)
+AZOTE_PROTO_REGIMM(azOpBGEZL)
 {
     uint64_t addr = state->cpu.pc + ((int16_t)imm << 2);
 
@@ -68,7 +68,7 @@ AZOTE_PROTO_REGIMM(azOpBEGZL)
     }
 }
 
-AZOTE_PROTO_REGIMM(azOpBEGZAL)
+AZOTE_PROTO_REGIMM(azOpBGEZAL)
 {
     uint64_t addr = state->cpu.pc + ((int16_t)imm << 2);
 
@@ -77,7 +77,7 @@ AZOTE_PROTO_REGIMM(azOpBEGZAL)
         state->cpu.pc2 = addr;
 }
 
-AZOTE_PROTO_REGIMM(azOpBEGZALL)
+AZOTE_PROTO_REGIMM(azOpBGEZALL)
 {
     uint64_t addr = state->cpu.pc + ((int16_t)imm << 2);
 

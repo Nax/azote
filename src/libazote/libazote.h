@@ -110,10 +110,10 @@ AZOTE_PROTO_R(azOpJR);
 AZOTE_PROTO_R(azOpJALR);
 AZOTE_PROTO_I(azOpBEQ);
 AZOTE_PROTO_I(azOpBEQL);
-AZOTE_PROTO_REGIMM(azOpBEGZ);
-AZOTE_PROTO_REGIMM(azOpBEGZL);
-AZOTE_PROTO_REGIMM(azOpBEGZAL);
-AZOTE_PROTO_REGIMM(azOpBEGZALL);
+AZOTE_PROTO_REGIMM(azOpBGEZ);
+AZOTE_PROTO_REGIMM(azOpBGEZL);
+AZOTE_PROTO_REGIMM(azOpBGEZAL);
+AZOTE_PROTO_REGIMM(azOpBGEZALL);
 AZOTE_PROTO_I(azOpBGTZ);
 AZOTE_PROTO_I(azOpBGTZL);
 AZOTE_PROTO_I(azOpBLEZ);
@@ -169,12 +169,15 @@ AZOTE_PROTO_R(azOpDIVU);
 AZOTE_PROTO_R(azOpDDIV);
 AZOTE_PROTO_R(azOpDDIVU);
 
+AZOTE_PROTO_I(azOpCACHE);
+
 AZOTE_PROTO_COP0(azOpMTC0);
 AZOTE_PROTO_COP0(azOpMFC0);
 
 typedef void (AzProcInstructionI)(AzState* state, uint8_t rs, uint8_t rt, uint16_t imm);
 typedef void (AzProcInstructionJ)(AzState* state, uint32_t target);
 typedef void (AzProcInstructionR)(AzState* state, uint8_t rs, uint8_t rt, uint8_t rd, uint8_t sa);
+typedef void (AzProcInstructionRegImm)(AzState* state, uint8_t rs, uint16_t imm);
 typedef void (AzProcInstructionCOP0)(AzState* state, uint8_t rt, uint8_t rd);
 
 uint8_t     azMemoryRead8(AzState* state, uint64_t addr);
@@ -210,6 +213,7 @@ struct AzState_ {
     char*       rdram;
     char*       spDmem;
     char*       spImem;
+    char*       piDmaRegisters;
 };
 
 #endif
