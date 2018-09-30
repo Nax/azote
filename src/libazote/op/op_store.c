@@ -17,3 +17,9 @@ AZOTE_PROTO_I(azOpSW)
     uint64_t addr = state->cpu.registers[rs] + (int16_t)imm;
     azMemoryWrite32(state, addr, state->cpu.registers[rt]);
 }
+
+AZOTE_PROTO_I(azOpSD)
+{
+    uint64_t addr = state->cpu.registers[rs] + (int16_t)imm;
+    azMemoryWrite64(state, addr, state->cpu.registers[rt]);
+}
