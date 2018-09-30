@@ -46,31 +46,85 @@ inline static uint64_t bswap64(uint64_t in)
     return out;
 }
 
+inline static uint64_t sext8(uint8_t v)
+{
+    return ((int64_t)((int8_t)v));
+}
+
+inline static uint64_t sext16(uint16_t v)
+{
+    return ((int64_t)((int16_t)v));
+}
+
+inline static uint64_t sext32(uint32_t v)
+{
+    return ((int64_t)((int32_t)v));
+}
+
 
 void azDebugDumpState(AzState* state);
 void azDebugHexdumpRaw(char* addr, size_t len);
 
 #define AZOTE_MEMORY_SIZE   (8 * 1024 * 1024)
-#define AZOTE_INST_I        0
-#define AZOTE_INST_J        1
-#define AZOTE_INST_R        2
+#define AZOTE_INST_NONE     0
+#define AZOTE_INST_I        1
+#define AZOTE_INST_J        2
+#define AZOTE_INST_R        3
 
-#define AZOTE_PROTO_I(x)    void x(AzState* state, uint8_t rs, uint8_t rt, uint16_t imm)
+#define AZOTE_PROTO_I(x)        void x(AzState* state, uint8_t rs, uint8_t rt, uint16_t imm)
+#define AZOTE_PROTO_J(x)        void x(AzState* state, uint32_t target)
+#define AZOTE_PROTO_REGIMM(x)   void x(AzState* state, uint8_t rs, uint16_t imm)
+#define AZOTE_PROTO_COP0(x)     void x(AzState* state, uint8_t rt, uint8_t rd)
 
-AZOTE_PROTO_I(azOpAddi);
-AZOTE_PROTO_I(azOpAddui);
-AZOTE_PROTO_I(azOpSlti);
-AZOTE_PROTO_I(azOpSltiu);
-AZOTE_PROTO_I(azOpAndi);
-AZOTE_PROTO_I(azOpOri);
-AZOTE_PROTO_I(azOpXori);
-AZOTE_PROTO_I(azOpLui);
-AZOTE_PROTO_I(azOpDaddi);
-AZOTE_PROTO_I(azOpDaddiu);
+AZOTE_PROTO_I(azOpADDI);
+AZOTE_PROTO_I(azOpADDIU);
+AZOTE_PROTO_I(azOpSLTI);
+AZOTE_PROTO_I(azOpSLTIU);
+AZOTE_PROTO_I(azOpANDI);
+AZOTE_PROTO_I(azOpORI);
+AZOTE_PROTO_I(azOpXORI);
+AZOTE_PROTO_I(azOpLUI);
+AZOTE_PROTO_I(azOpDADDI);
+AZOTE_PROTO_I(azOpDADDIU);
+
+AZOTE_PROTO_I(azOpLB);
+AZOTE_PROTO_I(azOpLBU);
+AZOTE_PROTO_I(azOpLH);
+AZOTE_PROTO_I(azOpLHU);
+AZOTE_PROTO_I(azOpLW);
+AZOTE_PROTO_I(azOpLWU);
+AZOTE_PROTO_I(azOpLWL);
+AZOTE_PROTO_I(azOpLWR);
+AZOTE_PROTO_I(azOpLD);
+AZOTE_PROTO_I(azOpLDL);
+AZOTE_PROTO_I(azOpLDR);
+
+AZOTE_PROTO_J(azOpJ);
+AZOTE_PROTO_J(azOpJAL);
+AZOTE_PROTO_I(azOpBEQ);
+AZOTE_PROTO_I(azOpBEQL);
+AZOTE_PROTO_REGIMM(azOpBEGZ);
+AZOTE_PROTO_REGIMM(azOpBEGZL);
+AZOTE_PROTO_REGIMM(azOpBEGZAL);
+AZOTE_PROTO_REGIMM(azOpBEGZALL);
+AZOTE_PROTO_I(azOpBGTZ);
+AZOTE_PROTO_I(azOpBGTZL);
+AZOTE_PROTO_I(azOpBLEZ);
+AZOTE_PROTO_I(azOpBLEZL);
+AZOTE_PROTO_REGIMM(azOpBLTZ);
+AZOTE_PROTO_REGIMM(azOpBLTZL);
+AZOTE_PROTO_REGIMM(azOpBLTZAL);
+AZOTE_PROTO_REGIMM(azOpBLTZALL);
+AZOTE_PROTO_I(azOpBNE);
+AZOTE_PROTO_I(azOpBNEL);
+
+AZOTE_PROTO_COP0(azOpMTC0);
+AZOTE_PROTO_COP0(azOpMFC0);
 
 typedef void (AzProcInstructionI)(AzState* state, uint8_t rs, uint8_t rt, uint16_t imm);
 typedef void (AzProcInstructionJ)(AzState* state, uint32_t target);
 typedef void (AzProcInstructionR)(AzState* state, uint8_t rs, uint8_t rt, uint8_t rd, uint8_t sa, uint8_t funct);
+typedef void (AzProcInstructionCOP0)(AzState* state, uint8_t rt, uint8_t rd);
 
 uint8_t     azMemoryRead8(AzState* state, uint64_t addr);
 uint16_t    azMemoryRead16(AzState* state, uint64_t addr);
@@ -82,13 +136,22 @@ void azMemoryWrite16(AzState* state, uint64_t addr, uint16_t value);
 void azMemoryWrite32(AzState* state, uint64_t addr, uint32_t value);
 void azMemoryWrite64(AzState* state, uint64_t addr, uint64_t value);
 
+typedef struct AzCPU_   AzCPU;
+typedef struct AzCOP0_  AzCOP0;
+
 struct AzCPU_ {
     uint64_t    registers[32];
     uint64_t    pc;
+    uint64_t    pc2;
+};
+
+struct AzCOP0_ {
+    uint64_t    registers[32];
 };
 
 struct AzState_ {
     AzCPU       cpu;
+    AzCOP0      cop0;
     uint64_t    cartSize;
     char*       cart;
     char*       rdram;

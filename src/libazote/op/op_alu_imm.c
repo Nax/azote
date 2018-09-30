@@ -1,6 +1,6 @@
 #include <libazote/libazote.h>
 
-AZOTE_PROTO_I(azOpAddi)
+AZOTE_PROTO_I(azOpADDI)
 {
     int32_t result;
 
@@ -11,7 +11,7 @@ AZOTE_PROTO_I(azOpAddi)
     }
 }
 
-AZOTE_PROTO_I(azOpAddiu)
+AZOTE_PROTO_I(azOpADDIU)
 {
     int32_t result;
 
@@ -22,7 +22,7 @@ AZOTE_PROTO_I(azOpAddiu)
     }
 }
 
-AZOTE_PROTO_I(azOpSlti)
+AZOTE_PROTO_I(azOpSLTI)
 {
     uint64_t result;
 
@@ -33,7 +33,7 @@ AZOTE_PROTO_I(azOpSlti)
     }
 }
 
-AZOTE_PROTO_I(azOpSltiu)
+AZOTE_PROTO_I(azOpSLTIU)
 {
     uint64_t result;
 
@@ -44,7 +44,7 @@ AZOTE_PROTO_I(azOpSltiu)
     }
 }
 
-AZOTE_PROTO_I(azOpAndi)
+AZOTE_PROTO_I(azOpANDI)
 {
     uint64_t result;
 
@@ -55,7 +55,7 @@ AZOTE_PROTO_I(azOpAndi)
     }
 }
 
-AZOTE_PROTO_I(azOpOri)
+AZOTE_PROTO_I(azOpORI)
 {
     uint64_t result;
 
@@ -66,7 +66,7 @@ AZOTE_PROTO_I(azOpOri)
     }
 }
 
-AZOTE_PROTO_I(azOpXori)
+AZOTE_PROTO_I(azOpXORI)
 {
     uint64_t result;
 
@@ -77,7 +77,7 @@ AZOTE_PROTO_I(azOpXori)
     }
 }
 
-AZOTE_PROTO_I(azOpLui)
+AZOTE_PROTO_I(azOpLUI)
 {
     int64_t result;
 
@@ -88,7 +88,7 @@ AZOTE_PROTO_I(azOpLui)
     }
 }
 
-AZOTE_PROTO_I(azOpDaddi)
+AZOTE_PROTO_I(azOpDADDI)
 {
     int64_t result;
 
@@ -99,7 +99,7 @@ AZOTE_PROTO_I(azOpDaddi)
     }
 }
 
-AZOTE_PROTO_I(azOpDaddiu)
+AZOTE_PROTO_I(azOpDADDIU)
 {
     int64_t result;
 

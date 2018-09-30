@@ -17,6 +17,7 @@ void azLoadFile(AzState* state, const char* path)
     state->cpu.registers[22] = 0x3F;
     state->cpu.registers[29] = 0xa4001ff0;
     state->cpu.pc = 0xa4000040;
+    state->cpu.pc2 = state->cpu.pc + 4;
 
     memcpy(state->spDmem, state->cart, 0x1000);
     azDebugDumpState(state);

@@ -12,7 +12,6 @@
 
 /* Structures */
 typedef struct AzState_ AzState;
-typedef struct AzCPU_   AzCPU;
 
 /* cpu.c */
 AZOTE_API void          azRun(AzState* state);
