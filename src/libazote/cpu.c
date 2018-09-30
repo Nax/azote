@@ -34,14 +34,14 @@ static void* kInstructionTableCommon[64] = {
 };
 
 static AzProcInstructionR* const kInstructionTableSpecial[64] = {
-    _(SLL), NULL, _(SRL), NULL, NULL, NULL, NULL, NULL,
+    _(SLL), NULL, _(SRL), _(SRA), _(SLLV), NULL, _(SRLV), _(SRAV),
+    _(JR), _(JALR), NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, _(DSLLV), NULL, _(DSRLV), _(DSRAV),
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    _(ADD), _(ADDU), _(SUB), _(SUBU), _(AND), _(OR), _(XOR), _(NOR),
+    NULL, NULL, _(SLT), _(SLTU), _(DADD), _(DADDU), _(DSUB), _(DSUBU),
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    _(DSLL), NULL, _(DSRL), _(DSRA), _(DSLL32), NULL, _(DSRL32), _(DSRA32),
 };
 
 static AzProcInstructionCOP0* const kInstructionTableCOP0[32] = {

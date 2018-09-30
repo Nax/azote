@@ -11,6 +11,21 @@ AZOTE_PROTO_J(azOpJAL)
     state->cpu.pc2 = (state->cpu.pc & 0xfffffffff0000000) | (target << 2);
 }
 
+AZOTE_PROTO_R(azOpJR)
+{
+    state->cpu.pc2 = state->cpu.registers[rs];
+}
+
+AZOTE_PROTO_R(azOpJALR)
+{
+    uint64_t tmp = state->cpu.registers[rs];
+    if (rd)
+    {
+        state->cpu.registers[rd] = state->cpu.pc + 4;
+    }
+    state->cpu.pc2 = tmp;
+}
+
 AZOTE_PROTO_I(azOpBEQ)
 {
     uint64_t addr = state->cpu.pc + ((int16_t)imm << 2);
