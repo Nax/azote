@@ -73,6 +73,7 @@ void azDebugHexdumpRaw(char* addr, size_t len);
 
 #define AZOTE_PROTO_I(x)        void x(AzState* state, uint8_t rs, uint8_t rt, uint16_t imm)
 #define AZOTE_PROTO_J(x)        void x(AzState* state, uint32_t target)
+#define AZOTE_PROTO_R(x)        void x(AzState* state, uint8_t rs, uint8_t rt, uint8_t rd, uint8_t sa)
 #define AZOTE_PROTO_REGIMM(x)   void x(AzState* state, uint8_t rs, uint16_t imm)
 #define AZOTE_PROTO_COP0(x)     void x(AzState* state, uint8_t rt, uint8_t rd)
 
@@ -99,6 +100,10 @@ AZOTE_PROTO_I(azOpLD);
 AZOTE_PROTO_I(azOpLDL);
 AZOTE_PROTO_I(azOpLDR);
 
+AZOTE_PROTO_I(azOpSB);
+AZOTE_PROTO_I(azOpSH);
+AZOTE_PROTO_I(azOpSW);
+
 AZOTE_PROTO_J(azOpJ);
 AZOTE_PROTO_J(azOpJAL);
 AZOTE_PROTO_I(azOpBEQ);
@@ -118,12 +123,15 @@ AZOTE_PROTO_REGIMM(azOpBLTZALL);
 AZOTE_PROTO_I(azOpBNE);
 AZOTE_PROTO_I(azOpBNEL);
 
+AZOTE_PROTO_R(azOpSLL);
+AZOTE_PROTO_R(azOpSRL);
+
 AZOTE_PROTO_COP0(azOpMTC0);
 AZOTE_PROTO_COP0(azOpMFC0);
 
 typedef void (AzProcInstructionI)(AzState* state, uint8_t rs, uint8_t rt, uint16_t imm);
 typedef void (AzProcInstructionJ)(AzState* state, uint32_t target);
-typedef void (AzProcInstructionR)(AzState* state, uint8_t rs, uint8_t rt, uint8_t rd, uint8_t sa, uint8_t funct);
+typedef void (AzProcInstructionR)(AzState* state, uint8_t rs, uint8_t rt, uint8_t rd, uint8_t sa);
 typedef void (AzProcInstructionCOP0)(AzState* state, uint8_t rt, uint8_t rd);
 
 uint8_t     azMemoryRead8(AzState* state, uint64_t addr);

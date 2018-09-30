@@ -4,7 +4,6 @@
 #define _       AZOTE_INST_NONE
 #define I       AZOTE_INST_I
 #define J       AZOTE_INST_J
-#define R       AZOTE_INST_R
 
 static uint8_t const kInstructionTableCommonType[64] = {
     _, _, J, J, I, I, I, I,
@@ -12,7 +11,7 @@ static uint8_t const kInstructionTableCommonType[64] = {
     _, _, _, _, I, I, I, I,
     I, I, I, I, _, _, _, _,
     I, I, I, I, I, I, I, I,
-    _, _, _, _, _, _, _, _,
+    I, I, _, I, _, _, _, _,
     _, _, _, _, _, _, _, _,
     _, _, _, _, _, _, _, _,
 };
@@ -20,7 +19,6 @@ static uint8_t const kInstructionTableCommonType[64] = {
 #undef _
 #undef I
 #undef J
-#undef R
 
 #define _(x)   (azOp ## x)
 
@@ -30,23 +28,34 @@ static void* kInstructionTableCommon[64] = {
     NULL, NULL, NULL, NULL, _(BEQL), _(BNEL), _(BLEZL), _(BGTZL),
     _(DADDI), _(DADDIU), _(LDL), _(LDR), NULL, NULL, NULL, NULL,
     _(LB), _(LH), _(LWL), _(LW), _(LBU), _(LHU), _(LWR), _(LWU),
+    _(SB), _(SH), NULL, _(SW), NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+};
+
+static AzProcInstructionR* const kInstructionTableSpecial[64] = {
+    _(SLL), NULL, _(SRL), NULL, NULL, NULL, NULL, NULL,
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+};
+
+static AzProcInstructionCOP0* const kInstructionTableCOP0[32] = {
+    _(MFC0), NULL, NULL, NULL,
+    _(MTC0), NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL,
 };
 
 #undef _
-
-static AzProcInstructionCOP0* const kInstructionTableCOP0[32] = {
-    azOpMFC0, NULL, NULL, NULL,
-    azOpMTC0, NULL, NULL, NULL,
-    NULL, NULL, NULL, NULL,
-    NULL, NULL, NULL, NULL,
-    NULL, NULL, NULL, NULL,
-    NULL, NULL, NULL, NULL,
-    NULL, NULL, NULL, NULL,
-    NULL, NULL, NULL, NULL,
-};
 
 static void _execInstructionCop0(AzState* state, uint32_t opcode)
 {
@@ -81,6 +90,19 @@ static void _execInstructionJ(AzState* state, uint32_t opcode)
     instr(state, target);
 }
 
+static void _execInstructionR(AzState* state, uint32_t opcode)
+{
+    uint8_t selector = (opcode & 0x3f);
+    uint8_t sa = (opcode >> 6) & 0x1f;
+    uint8_t rd = (opcode >> 11) & 0x1f;
+    uint8_t rt = (opcode >> 16) & 0x1f;
+    uint8_t rs = (opcode >> 21) & 0x1f;
+
+    AzProcInstructionR* instr = kInstructionTableSpecial[selector];
+    printf("R\n");
+    instr(state, rs, rt, rd, sa);
+}
+
 static void _execInstructionCommon(AzState* state, uint32_t opcode)
 {
     uint8_t selector = (opcode >> 26);
@@ -94,8 +116,6 @@ static void _execInstructionCommon(AzState* state, uint32_t opcode)
     case AZOTE_INST_J:
         _execInstructionJ(state, opcode);
         break;
-    case AZOTE_INST_R:
-        break;
     default:
         abort();
     }
@@ -107,6 +127,9 @@ static void _execInstruction(AzState* state, uint32_t opcode)
 
     switch (op)
     {
+    case 0x00:
+        _execInstructionR(state, opcode);
+        return;
     case 0x10:
         _execInstructionCop0(state, opcode);
         return;
