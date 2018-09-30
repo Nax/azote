@@ -141,10 +141,20 @@ static void _execInstruction(AzState* state, uint32_t opcode)
 
 void azRun(AzState* state)
 {
+    int debug = 0;
     for (;;)
     {
+        /*if ((state->cpu.pc & 0xffffffff) == 0xA400090C)
+            debug = 1;*/
+
         uint32_t opcode = azMemoryRead32(state, state->cpu.pc);
-        printf("PC: 0x%016llx   Op: 0x%08x\n", state->cpu.pc, opcode);
+        printf("PC:  0x%016llx   Op: 0x%08x\n", state->cpu.pc, opcode);
+        printf("PC2: 0x%016llx\n", state->cpu.pc2);
+        if (debug)
+        {
+            azDebugDumpState(state);
+            getchar();
+        }
         state->cpu.pc = state->cpu.pc2;
         state->cpu.pc2 += 4;
         _execInstruction(state, opcode);

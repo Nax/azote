@@ -41,7 +41,10 @@ AZOTE_PROTO_I(azOpBEQL)
     if (state->cpu.registers[rs] == state->cpu.registers[rt])
         state->cpu.pc2 = addr;
     else
+    {
         state->cpu.pc += 4;
+        state->cpu.pc2 += 4;
+    }
 }
 
 AZOTE_PROTO_REGIMM(azOpBEGZ)
@@ -59,7 +62,10 @@ AZOTE_PROTO_REGIMM(azOpBEGZL)
     if (state->cpu.registers[rs] >= 0)
         state->cpu.pc2 = addr;
     else
+    {
         state->cpu.pc += 4;
+        state->cpu.pc2 += 4;
+    }
 }
 
 AZOTE_PROTO_REGIMM(azOpBEGZAL)
@@ -79,7 +85,10 @@ AZOTE_PROTO_REGIMM(azOpBEGZALL)
     if (state->cpu.registers[rs] >= 0)
         state->cpu.pc2 = addr;
     else
+    {
         state->cpu.pc += 4;
+        state->cpu.pc2 += 4;
+    }
 }
 
 AZOTE_PROTO_I(azOpBGTZ)
@@ -97,7 +106,10 @@ AZOTE_PROTO_I(azOpBGTZL)
     if (state->cpu.registers[rs] > 0)
         state->cpu.pc2 = addr;
     else
+    {
         state->cpu.pc += 4;
+        state->cpu.pc2 += 4;
+    }
 }
 
 AZOTE_PROTO_I(azOpBLEZ)
@@ -115,7 +127,10 @@ AZOTE_PROTO_I(azOpBLEZL)
     if (state->cpu.registers[rs] <= 0)
         state->cpu.pc2 = addr;
     else
+    {
         state->cpu.pc += 4;
+        state->cpu.pc2 += 4;
+    }
 }
 
 AZOTE_PROTO_REGIMM(azOpBLTZ)
@@ -133,7 +148,10 @@ AZOTE_PROTO_REGIMM(azOpBLTZL)
     if (state->cpu.registers[rs] < 0)
         state->cpu.pc2 = addr;
     else
+    {
         state->cpu.pc += 4;
+        state->cpu.pc2 += 4;
+    }
 }
 
 AZOTE_PROTO_REGIMM(azOpBLTZAL)
@@ -153,7 +171,10 @@ AZOTE_PROTO_REGIMM(azOpBLTZALL)
     if (state->cpu.registers[rs] < 0)
         state->cpu.pc2 = addr;
     else
+    {
         state->cpu.pc += 4;
+        state->cpu.pc2 += 4;
+    }
 }
 
 AZOTE_PROTO_I(azOpBNE)
@@ -171,5 +192,8 @@ AZOTE_PROTO_I(azOpBNEL)
     if (state->cpu.registers[rs] != state->cpu.registers[rt])
         state->cpu.pc2 = addr;
     else
+    {
         state->cpu.pc += 4;
+        state->cpu.pc2 += 4;
+    }
 }
