@@ -50,6 +50,8 @@ void azDebugDumpState(AzState* state)
         }
         printf("0x%016llx\n", state->cpu.registers[i]);
     }
+    printf("  hi:        0x%016llx\n", state->cpu.hi);
+    printf("  lo:        0x%016llx\n", state->cpu.lo);
     printf("  pc:        0x%016llx\n", state->cpu.pc);
     puts("===============================================");
     puts("");

@@ -36,8 +36,8 @@ static void* kInstructionTableCommon[64] = {
 static AzProcInstructionR* const kInstructionTableSpecial[64] = {
     _(SLL), NULL, _(SRL), _(SRA), _(SLLV), NULL, _(SRLV), _(SRAV),
     _(JR), _(JALR), NULL, NULL, NULL, NULL, NULL, NULL,
-    NULL, NULL, NULL, NULL, _(DSLLV), NULL, _(DSRLV), _(DSRAV),
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    _(MFHI), _(MTHI), _(MFLO), _(MTLO), _(DSLLV), NULL, _(DSRLV), _(DSRAV),
+    _(MULT), _(MULTU), _(DIV), _(DIVU), _(DMULT), _(DMULTU), _(DDIV), _(DDIVU),
     _(ADD), _(ADDU), _(SUB), _(SUBU), _(AND), _(OR), _(XOR), _(NOR),
     NULL, NULL, _(SLT), _(SLTU), _(DADD), _(DADDU), _(DSUB), _(DSUBU),
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
@@ -145,7 +145,7 @@ void azRun(AzState* state)
     for (;;)
     {
         /*if ((state->cpu.pc & 0xffffffff) == 0xA400090C)
-            debug = 1;*/
+            debug = 1; */
 
         uint32_t opcode = azMemoryRead32(state, state->cpu.pc);
         printf("PC:  0x%016llx   Op: 0x%08x\n", state->cpu.pc, opcode);

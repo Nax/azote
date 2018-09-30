@@ -156,6 +156,19 @@ AZOTE_PROTO_R(azOpDADDU);
 AZOTE_PROTO_R(azOpDSUB);
 AZOTE_PROTO_R(azOpDSUBU);
 
+AZOTE_PROTO_R(azOpMFLO);
+AZOTE_PROTO_R(azOpMFHI);
+AZOTE_PROTO_R(azOpMTLO);
+AZOTE_PROTO_R(azOpMTHI);
+AZOTE_PROTO_R(azOpMULT);
+AZOTE_PROTO_R(azOpMULTU);
+AZOTE_PROTO_R(azOpDMULT);
+AZOTE_PROTO_R(azOpDMULTU);
+AZOTE_PROTO_R(azOpDIV);
+AZOTE_PROTO_R(azOpDIVU);
+AZOTE_PROTO_R(azOpDDIV);
+AZOTE_PROTO_R(azOpDDIVU);
+
 AZOTE_PROTO_COP0(azOpMTC0);
 AZOTE_PROTO_COP0(azOpMFC0);
 
@@ -179,6 +192,8 @@ typedef struct AzCOP0_  AzCOP0;
 
 struct AzCPU_ {
     uint64_t    registers[32];
+    uint64_t    hi;
+    uint64_t    lo;
     uint64_t    pc;
     uint64_t    pc2;
 };
