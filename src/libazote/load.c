@@ -42,7 +42,7 @@ void azLoadFile(AzState* state, const char* path)
     state->cpu.registers[29] = 0xa4001ff0;
     state->cpu.registers[31] = 0xffffffffa4001550;
 
-    state->cpu.pc = 0xa4000040;
+    state->cpu.pc = 0xffffffffa4000040;
     state->cpu.pc2 = state->cpu.pc + 4;
 
     state->cop0.registers[4] = 0x007ffff0;

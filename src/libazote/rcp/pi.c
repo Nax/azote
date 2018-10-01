@@ -11,7 +11,7 @@ static void _dmaWrite(AzState* state)
     ramAddr = state->piRegisters[0];
     romAddr = state->piRegisters[1];
     printf("0x%08x -> 0x%08x (%llu bytes)\n", romAddr, ramAddr, size);
-    getchar();
+    //getchar();
     memcpy(state->rdram + ramAddr, state->cart + (romAddr & 0x0fffffff), size);
     azRcpRaiseInterrupt(state, RCP_INTR_PI);
 }
