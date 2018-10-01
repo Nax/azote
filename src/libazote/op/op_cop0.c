@@ -40,9 +40,6 @@ AZOTE_PROTO_COPCO(azOpTLBP)
 
 AZOTE_PROTO_COPCO(azOpERET)
 {
-    printf("ERET, Status: 0x%016llx EPC: 0x%016llx\n", state->cop0.registers[12], state->cop0.registers[14]);
-    state->verbose = 1;
-    getchar();
     if (state->cop0.registers[12] & (1 << 2))
     {
         state->cop0.registers[12] &= 0xfffffffffffffffb;

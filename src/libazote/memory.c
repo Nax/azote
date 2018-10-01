@@ -19,43 +19,6 @@ static uint64_t _removeSegment(uint64_t addr)
     return addr & 0x1fffffff;
 }
 
-static void _piDmaRead(AzState* state)
-{
-    uint64_t size;
-    uint32_t ramAddr;
-    uint32_t romAddr;
-
-    puts("DMA (Read)");
-    getchar();
-    size = (uint64_t)bswap32(*(uint32_t*)(state->piRegisters + 0x0C)) + 1;
-    ramAddr = bswap32(*(uint32_t*)(state->piRegisters + 0x00));
-    romAddr = bswap32(*(uint32_t*)(state->piRegisters + 0x04));
-    printf("0x%08x -> 0x%08x (%llu bytes)\n", romAddr, ramAddr, size);
-    getchar();
-    memcpy(state->rdram + ramAddr, state->cart + (romAddr & 0x0fffffff), size);
-}
-
-static void _piDmaWrite(AzState* state)
-{
-    uint64_t size;
-    uint32_t ramAddr;
-    uint32_t romAddr;
-
-    puts("DMA (Write)");
-    size = (uint64_t)bswap32(*(uint32_t*)(state->piRegisters + 0x0C)) + 1;
-    ramAddr = bswap32(*(uint32_t*)(state->piRegisters + 0x00));
-    romAddr = bswap32(*(uint32_t*)(state->piRegisters + 0x04));
-    printf("0x%08x -> 0x%08x (%llu bytes)\n", romAddr, ramAddr, size);
-    getchar();
-    memcpy(state->rdram + ramAddr, state->cart + (romAddr & 0x0fffffff), size);
-}
-
-static void _piDmaClear(AzState* state)
-{
-    *(uint32_t*)(state->piRegisters + 0x10) = 0;
-}
-
-
 #define READ_MEMORY(x, type, swap)                                      \
 type x(AzState* state, uint64_t addr)                                   \
 {                                                                       \
@@ -78,13 +41,13 @@ type x(AzState* state, uint64_t addr)                                   \
     else if (addr >= 0x04080000 && addr < 0x04080008)                   \
         res = swap(*(type*)(state->sp2Registers + (addr & 0xff)));      \
     else if (addr >= 0x04300000 && addr < 0x04300010)                   \
-        res = swap(*(type*)(state->miRegisters + (addr & 0xff)));       \
+        res = azRcpReadMI(state, addr);                                 \
     else if (addr >= 0x04400000 && addr < 0x04400038)                   \
         res = swap(*(type*)(state->viRegisters + (addr & 0xff)));       \
     else if (addr >= 0x04500000 && addr < 0x04500018)                   \
         res = swap(*(type*)(state->aiRegisters + (addr & 0xff)));       \
     else if (addr >= 0x04600000 && addr < 0x04600034)                   \
-        res = swap(*(type*)(state->piRegisters + (addr & 0xff)));       \
+        res = azRcpReadPI(state, addr);                                 \
     else if (addr >= 0x04700000 && addr < 0x04700020)                   \
             res = swap(*(type*)(state->piRegisters + (addr & 0xff)));   \
     else if (addr >= 0x04800000 && addr < 0x0480001c)                   \
@@ -127,18 +90,13 @@ void x(AzState* state, uint64_t addr, type value)                       \
     else if (addr >= 0x04080000 && addr < 0x04080008)                   \
         *(type*)(state->sp2Registers + (addr & 0xff)) = swap(value);    \
     else if (addr >= 0x04300000 && addr < 0x04300010)                   \
-        *(type*)(state->miRegisters + (addr & 0xff)) = swap(value);     \
+        azRcpWriteMI(state, addr, value);                               \
     else if (addr >= 0x04400000 && addr < 0x04400038)                   \
         *(type*)(state->viRegisters + (addr & 0xff)) = swap(value);     \
     else if (addr >= 0x04500000 && addr < 0x04500018)                   \
         *(type*)(state->aiRegisters + (addr & 0xff)) = swap(value);     \
     else if (addr >= 0x04600000 && addr < 0x04600034)                   \
-    {                                                                   \
-        *(type*)(state->piRegisters + (addr & 0xff)) = swap(value);     \
-        if (addr >= 0x04600008 && addr < 0x0460000c) _piDmaRead(state); \
-        if (addr >= 0x0460000c && addr < 0x04600010) _piDmaWrite(state);\
-        _piDmaClear(state);                                             \
-    }                                                                   \
+        azRcpWritePI(state, addr, value);                               \
     else if (addr >= 0x04700000 && addr < 0x04700020)                   \
         *(type*)(state->riRegisters + (addr & 0xff)) = swap(value);     \
     else if (addr >= 0x04800000 && addr < 0x0480001c)                   \

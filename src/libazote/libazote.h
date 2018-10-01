@@ -205,6 +205,51 @@ void azMemoryWrite16(AzState* state, uint64_t addr, uint16_t value);
 void azMemoryWrite32(AzState* state, uint64_t addr, uint32_t value);
 void azMemoryWrite64(AzState* state, uint64_t addr, uint64_t value);
 
+/* RCP */
+
+#define RCP_INTR_SP 0
+#define RCP_INTR_SI 1
+#define RCP_INTR_AI 2
+#define RCP_INTR_VI 3
+#define RCP_INTR_PI 4
+#define RCP_INTR_DP 5
+
+#define MI_INIT_MODE_REG    0x04300000
+#define MI_VERSION_REG      0x04300004
+#define MI_INTR_REG         0x04300008
+#define MI_INTR_MASK_REG    0x0430000c
+
+#define MI_INTR_SP  0x01
+#define MI_INTR_SI  0x02
+#define MI_INTR_AI  0x04
+#define MI_INTR_VI  0x08
+#define MI_INTR_PI  0x10
+#define MI_INTR_DP  0x20
+
+#define PI_DRAM_ADDR_REG        0x04600000
+#define PI_CART_ADDR_REG        0x04600004
+#define PI_RD_LEN_REG           0x04600008
+#define PI_WR_LEN_REG           0x0460000c
+#define PI_STATUS_REG           0x04600010
+#define PI_BSD_DOM1_LAT_REG     0x04600014
+#define PI_BSD_DOM1_PWD_REG     0x04600018
+#define PI_BSD_DOM1_PGS_REG     0x0460001c
+#define PI_BSD_DOM1_RLS_REG     0x04600020
+#define PI_BSD_DOM2_LAT_REG     0x04600024
+#define PI_BSD_DOM2_PWD_REG     0x04600028
+#define PI_BSD_DOM2_PGS_REG     0x0460002c
+#define PI_BSD_DOM2_RLS_REG     0x04600030
+
+void        azRcpClearInterrupt(AzState* state, uint8_t intr);
+void        azRcpRaiseInterrupt(AzState* state, uint8_t intr);
+void        azRcpCheckInterrupts(AzState* state);
+
+uint32_t    azRcpReadMI(AzState* state, uint32_t addr);
+uint32_t    azRcpReadPI(AzState* state, uint32_t addr);
+
+void        azRcpWriteMI(AzState* state, uint32_t addr, uint32_t value);
+void        azRcpWritePI(AzState* state, uint32_t addr, uint32_t value);
+
 typedef union AzReg_    AzReg;
 typedef struct AzCPU_   AzCPU;
 typedef struct AzCOP0_  AzCOP0;
@@ -250,10 +295,10 @@ struct AzState_ {
     char*       spImem;
     char*       sp1Registers;
     char*       sp2Registers;
-    char*       miRegisters;
+    uint32_t*   miRegisters;
     char*       viRegisters;
     char*       aiRegisters;
-    char*       piRegisters;
+    uint32_t*   piRegisters;
     char*       riRegisters;
     char*       siRegisters;
     char*       pifram;
