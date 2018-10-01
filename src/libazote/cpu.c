@@ -194,13 +194,15 @@ static void _execInstruction(AzState* state, uint32_t opcode)
 static void _handleTimer(AzState* state)
 {
     state->cop0.registers[9]++;
+    if (state->cop0.registers[9] > 10000000)
+        state->verbose = 1;
     if (state->cop0.registers[9] == state->cop0.registers[11])
     {
         puts("*** TIMER !!! ***");
         getchar();
     }
-    /*if ((state->cop0.registers[9] % (1 << 20)) == 0)
-        printf("Count: 0x%016llx   Compare: 0x%016llx\n", state->cop0.registers[9], state->cop0.registers[11]);*/
+    if ((state->cop0.registers[9] % (1 << 20)) == 0)
+        ;//printf("Count: 0x%016llx   Compare: 0x%016llx\n", state->cop0.registers[9], state->cop0.registers[11]);
 }
 
 static void _handleInterrupts(AzState* state)
@@ -230,7 +232,8 @@ void azRun(AzState* state)
         /* if ((state->cpu.pc & 0xffffffff) == 0x800001b4)
             debug = 1; */
         uint32_t opcode = azMemoryRead32(state, state->cpu.pc);
-        //printf("PC:  0x%016llx   Op: 0x%08x\n", state->cpu.pc, opcode);
+        if (state->verbose)
+            printf("PC:  0x%016llx   Op: 0x%08x\n", state->cpu.pc, opcode);
         if (state->debug && 0)
         {
             azDebugDumpState(state);

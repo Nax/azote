@@ -245,11 +245,20 @@ struct AzState_ {
     uint64_t    cartSize;
     char*       cart;
     char*       rdram;
+    char*       rdramRegisters;
     char*       spDmem;
     char*       spImem;
+    char*       sp1Registers;
+    char*       sp2Registers;
     char*       miRegisters;
-    char*       piDmaRegisters;
+    char*       viRegisters;
+    char*       aiRegisters;
+    char*       piRegisters;
+    char*       riRegisters;
+    char*       siRegisters;
+    char*       pifram;
     unsigned    debug:1;
+    unsigned    verbose:1;
 };
 
 #endif

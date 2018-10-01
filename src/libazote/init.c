@@ -1,21 +1,27 @@
 #include <libazote/libazote.h>
 
+#define zalloc(x)   calloc((x), 1)
+
 AzState* azInit()
 {
     AzState* state;
 
-    state = malloc(sizeof(*state));
-    memset(state, 0, sizeof(*state));
-    state->rdram = malloc(AZOTE_MEMORY_SIZE);
-    memset(state->rdram, 0, AZOTE_MEMORY_SIZE);
-    state->spDmem = malloc(0x1000);
-    state->spImem = malloc(0x1000);
-    memset(state->spDmem, 0, 0x1000);
-    memset(state->spImem, 0, 0x1000);
-    state->miRegisters = malloc(0x10);
-    memset(state->miRegisters, 0, 0x10);
-    state->piDmaRegisters = malloc(20);
-    memset(state->piDmaRegisters, 0, 20);
+    state = zalloc(sizeof(*state));
+
+    state->rdram = zalloc(AZOTE_MEMORY_SIZE);
+    state->rdramRegisters = zalloc(0x28);
+    state->spDmem = zalloc(0x1000);
+    state->spImem = zalloc(0x1000);
+    state->sp1Registers = zalloc(0x20);
+    state->sp2Registers = zalloc(0x8);
+    state->miRegisters = zalloc(0x10);
+    state->viRegisters = zalloc(0x38);
+    state->aiRegisters = zalloc(0x18);
+    state->piRegisters = zalloc(0x34);
+    state->riRegisters = zalloc(0x20);
+    state->siRegisters = zalloc(0x1c);
+    state->pifram = zalloc(0x40);
+
     return state;
 }
 
@@ -23,12 +29,21 @@ void azExit(AzState* state)
 {
     if (state)
     {
-        free(state->rdram);
         free(state->cart);
+        free(state->rdram);
+        free(state->rdramRegisters);
         free(state->spDmem);
         free(state->spImem);
+        free(state->sp1Registers);
+        free(state->sp2Registers);
+        free(state->sp2Registers);
         free(state->miRegisters);
-        free(state->piDmaRegisters);
+        free(state->viRegisters);
+        free(state->aiRegisters);
+        free(state->piRegisters);
+        free(state->riRegisters);
+        free(state->siRegisters);
+        free(state->pifram);
     }
     free(state);
 }
