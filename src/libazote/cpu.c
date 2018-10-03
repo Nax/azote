@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <time.h>
 #include <libazote/libazote.h>
 
 #define _       AZOTE_INST_NONE
@@ -11,9 +12,9 @@ static uint8_t const kInstructionTableCommonType[64] = {
     _, _, _, _, I, I, I, I,
     I, I, I, I, _, _, _, _,
     I, I, I, I, I, I, I, I,
-    I, I, _, I, _, _, _, I,
-    _, _, _, _, _, _, _, I,
-    _, _, _, _, _, _, _, I,
+    I, I, I, I, I, I, I, I,
+    I, I, _, _, I, I, _, I,
+    I, I, _, _, I, I, _, I,
 };
 
 #undef _
@@ -28,9 +29,9 @@ static void* kInstructionTableCommon[64] = {
     NULL, NULL, NULL, NULL, _(BEQL), _(BNEL), _(BLEZL), _(BGTZL),
     _(DADDI), _(DADDIU), _(LDL), _(LDR), NULL, NULL, NULL, NULL,
     _(LB), _(LH), _(LWL), _(LW), _(LBU), _(LHU), _(LWR), _(LWU),
-    _(SB), _(SH), NULL, _(SW), NULL, NULL, NULL, _(CACHE),
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, _(LD),
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, _(SD),
+    _(SB), _(SH), _(SWL), _(SW), _(SDL), _(SDR), _(SWR), _(CACHE),
+    _(LL), _(LWC1), NULL, NULL, _(LLD), _(LDC1), NULL, _(LD),
+    _(SC), _(SWC1), NULL, NULL, _(SCD), _(SDC1), NULL, _(SD),
 };
 
 static AzProcInstructionR* const kInstructionTableSpecial[64] = {
@@ -228,17 +229,15 @@ static void _handleInterrupts(AzState* state)
     }
 }
 
-void azRun(AzState* state)
+void _runCycles(AzState* state, uint32_t cycles)
 {
     uint64_t pcBak;
 
-    for (;;)
+    for (uint32_t i = 0; i < cycles; ++i)
     {
-        /* if ((state->cpu.pc & 0xffffffff) == 0x800001b4)
-            debug = 1; */
         uint32_t opcode = azMemoryRead32(state, state->cpu.pc);
         if (state->verbose)
-            //printf("PC:  0x%016llx   Op: 0x%08x\n", state->cpu.pc, opcode);
+            printf("PC:  0x%016llx   Op: 0x%08x\n", state->cpu.pc, opcode);
         if (state->debug && 0)
         {
             azDebugDumpState(state);
@@ -263,5 +262,29 @@ void azRun(AzState* state)
         }
         _handleTimer(state);
         _handleInterrupts(state);
+    }
+}
+
+uint64_t _getTimeNano()
+{
+    return clock_gettime_nsec_np(CLOCK_UPTIME_RAW);
+}
+
+void azRun(AzState* state)
+{
+    static const uint64_t kPeriod = 16666666;
+    uint64_t referenceTime;
+    uint64_t dt;
+
+    referenceTime = _getTimeNano();
+    for (;;)
+    {
+        _runCycles(state, 8192);
+        dt = _getTimeNano() - referenceTime;
+        if (dt >= kPeriod)
+        {
+            referenceTime += kPeriod;
+            azRcpRaiseInterrupt(state, RCP_INTR_VI);
+        }
     }
 }

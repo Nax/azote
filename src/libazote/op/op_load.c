@@ -159,3 +159,37 @@ AZOTE_PROTO_I(azOpLDR)
 
     state->cpu.registers[rt] = value;
 }
+
+AZOTE_PROTO_I(azOpLL)
+{
+    uint64_t addr = state->cpu.registers[rs] + (int16_t)imm;
+    state->cpu.ll = 1;
+    state->cop0.registers[17] = addr;
+
+    if (!rt) return;
+
+    state->cpu.registers[rt] = (int32_t)azMemoryRead32(state, addr);
+}
+
+AZOTE_PROTO_I(azOpLLD)
+{
+    uint64_t addr = state->cpu.registers[rs] + (int16_t)imm;
+    state->cpu.ll = 1;
+    state->cop0.registers[17] = addr;
+
+    if (!rt) return;
+
+    state->cpu.registers[rt] = azMemoryRead64(state, addr);
+}
+
+AZOTE_PROTO_I(azOpLWC1)
+{
+    uint64_t addr = state->cpu.registers[rs] + (int16_t)imm;
+    state->cop1.registers[rt].u32 = azMemoryRead32(state, addr);
+}
+
+AZOTE_PROTO_I(azOpLDC1)
+{
+    uint64_t addr = state->cpu.registers[rs] + (int16_t)imm;
+    state->cop1.registers[rt].u64 = azMemoryRead64(state, addr);
+}

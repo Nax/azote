@@ -43,7 +43,7 @@ type x(AzState* state, uint64_t addr)                                   \
     else if (addr >= 0x04300000 && addr < 0x04300010)                   \
         res = azRcpReadMI(state, addr);                                 \
     else if (addr >= 0x04400000 && addr < 0x04400038)                   \
-        res = swap(*(type*)(state->viRegisters + (addr & 0xff)));       \
+        res = azRcpReadVI(state, addr);                                 \
     else if (addr >= 0x04500000 && addr < 0x04500018)                   \
         res = swap(*(type*)(state->aiRegisters + (addr & 0xff)));       \
     else if (addr >= 0x04600000 && addr < 0x04600034)                   \
@@ -92,7 +92,7 @@ void x(AzState* state, uint64_t addr, type value)                       \
     else if (addr >= 0x04300000 && addr < 0x04300010)                   \
         azRcpWriteMI(state, addr, value);                               \
     else if (addr >= 0x04400000 && addr < 0x04400038)                   \
-        *(type*)(state->viRegisters + (addr & 0xff)) = swap(value);     \
+        azRcpWriteVI(state, addr, value);                               \
     else if (addr >= 0x04500000 && addr < 0x04500018)                   \
         *(type*)(state->aiRegisters + (addr & 0xff)) = swap(value);     \
     else if (addr >= 0x04600000 && addr < 0x04600034)                   \
