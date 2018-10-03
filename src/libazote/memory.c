@@ -9,21 +9,11 @@ static uint64_t _badIO(AzState* state, uint64_t addr, int write, int align)
     return 0;
 }
 
-static uint64_t _removeSegment(uint64_t addr)
-{
-    addr &= 0xffffffff;
-    if ((addr & 0x80000000) == 0)
-    {
-        return addr;
-    }
-    return addr & 0x1fffffff;
-}
-
 #define READ_MEMORY(x, type, swap)                                      \
-type x(AzState* state, uint64_t addr)                                   \
+type x(AzState* state, uint64_t vaddr)                                  \
 {                                                                       \
     type res;                                                           \
-    addr = _removeSegment(addr);                                        \
+    uint32_t addr = azPhysicalAddress(state, vaddr);                    \
     if (addr % sizeof(type) != 0)                                       \
         return _badIO(state, addr, 0, 1);                               \
     if (addr >= 0x00000000 && addr < AZOTE_MEMORY_SIZE)                 \
@@ -67,9 +57,9 @@ READ_MEMORY(azMemoryRead32, uint32_t, bswap32);
 READ_MEMORY(azMemoryRead64, uint64_t, bswap64);
 
 #define WRITE_MEMORY(x, type, swap)                                     \
-void x(AzState* state, uint64_t addr, type value)                       \
+void x(AzState* state, uint64_t vaddr, type value)                      \
 {                                                                       \
-    addr = _removeSegment(addr);                                        \
+    uint32_t addr = azPhysicalAddress(state, vaddr);                    \
     if (addr % sizeof(type) != 0)                                       \
     {                                                                   \
         _badIO(state, addr, 0, 1);                                      \

@@ -324,13 +324,12 @@ static void _handleInterrupts(AzState* state)
     pending &= ((status >> 8) & 0xff);
     if (pending)
     {
-        puts("*** INTERRUPT ! ***");
-        printf("IMASK:  0x%02llx\n", pending);
-        printf("PC:     0x%016llx\n", state->cpu.pc);
-        if (!state->verbose) getchar();
+        int bd = (state->cpu.pc2 != state->cpu.pc + 4);
         state->verbose = 1;
         state->cop0.registers[12] |= 0x02;
         state->cop0.registers[14] = state->cpu.pc;
+        if (bd)
+            state->cop0.registers[14] -= 4;
         state->cpu.pc = 0xffffffff80000180;
         state->cpu.pc2 = state->cpu.pc + 4;
     }
@@ -343,8 +342,8 @@ void _runCycles(AzState* state, uint32_t cycles)
     for (uint32_t i = 0; i < cycles; ++i)
     {
         uint32_t opcode = azMemoryRead32(state, state->cpu.pc);
-        if (state->verbose)
-            printf("PC:  0x%016llx   Op: 0x%08x\n", state->cpu.pc, opcode);
+        /*if (state->verbose)
+            printf("PC:  0x%016llx   Op: 0x%08x\n", state->cpu.pc, opcode);*/
         if (state->debug && 0)
         {
             azDebugDumpState(state);

@@ -313,6 +313,8 @@ typedef void (AzProcInstructionCop)(AzState* state, uint8_t rt, uint8_t rd);
 typedef void (AzProcInstructionCopCo)(AzState* state);
 typedef void (AzProcInstructionFpR)(AzState* state, uint8_t ft, uint8_t fs, uint8_t fd);
 
+uint32_t    azPhysicalAddress(AzState* state, uint64_t vaddr);
+
 uint8_t     azMemoryRead8(AzState* state, uint64_t addr);
 uint16_t    azMemoryRead16(AzState* state, uint64_t addr);
 uint32_t    azMemoryRead32(AzState* state, uint64_t addr);
@@ -322,6 +324,33 @@ void azMemoryWrite8(AzState* state, uint64_t addr, uint8_t value);
 void azMemoryWrite16(AzState* state, uint64_t addr, uint16_t value);
 void azMemoryWrite32(AzState* state, uint64_t addr, uint32_t value);
 void azMemoryWrite64(AzState* state, uint64_t addr, uint64_t value);
+
+/* COP0 */
+#define COP0_REG_INDEX          0
+#define COP0_REG_RANDOM         1
+#define COP0_REG_ENTRYLO0       2
+#define COP0_REG_ENTRYLO1       3
+#define COP0_REG_CONTEXT        4
+#define COP0_REG_PAGE_MASK      5
+#define COP0_REG_WIRED          6
+#define COP0_REG_BADVADDR       8
+#define COP0_REG_COUNT          9
+#define COP0_REG_ENTRYHI        10
+#define COP0_REG_COMPARE        11
+#define COP0_REG_STATUS         12
+#define COP0_REG_CAUSE          13
+#define COP0_REG_EPC            14
+#define COP0_REG_PRID           15
+#define COP0_REG_CONFIG         16
+#define COP0_REG_LLADDR         17
+#define COP0_REG_WATCHLO        18
+#define COP0_REG_WATCHHI        19
+#define COP0_REG_XCONTEXT       20
+#define COP0_REG_PARITY_ERROR   26
+#define COP0_REG_CACHEERR       27
+#define COP0_REG_TAGLO          28
+#define COP0_REG_TAGHI          29
+#define COP0_REG_ERROR_EPC      30
 
 /* RCP */
 
@@ -389,6 +418,7 @@ typedef union AzReg_    AzReg;
 typedef struct AzCPU_   AzCPU;
 typedef struct AzCOP0_  AzCOP0;
 typedef struct AzCOP1_  AzCOP1;
+typedef struct AzTLB_   AzTLB;
 
 union AzReg_ {
     uint64_t    u64;
@@ -418,10 +448,18 @@ struct AzCOP1_ {
     uint32_t    fcr31;
 };
 
+struct AzTLB_ {
+    uint64_t    lo0[32];
+    uint64_t    lo1[32];
+    uint64_t    hi[32];
+    uint64_t    mask[32];
+};
+
 struct AzState_ {
     AzCPU       cpu;
     AzCOP0      cop0;
     AzCOP1      cop1;
+    AzTLB       tlb;
     uint64_t    cartSize;
     char*       cart;
     char*       rdram;
