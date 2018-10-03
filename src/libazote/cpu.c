@@ -75,6 +75,50 @@ static AzProcInstructionCop* const kInstructionTableCOP1[32] = {
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 };
 
+static void* const kInstructionTableFp_S[64] = {
+    _(ADD_S), _(SUB_S), _(MUL_S), _(DIV_S), _(SQRT_S), _(ABS_S), _(MOV_S), _(NEG_S),
+    _(ROUND_L_S), _(TRUNC_L_S), _(CEIL_L_S), _(FLOOR_L_S), _(ROUND_W_S), _(TRUNC_W_S), _(CEIL_W_S), _(FLOOR_W_S),
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, _(CVT_D_S), NULL, NULL, _(CVT_W_S), _(CVT_L_S), NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+};
+
+static void* const kInstructionTableFp_D[64] = {
+    _(ADD_D), _(SUB_D), _(MUL_D), _(DIV_D), _(SQRT_D), _(ABS_D), _(MOV_D), _(NEG_D),
+    _(ROUND_L_D), _(TRUNC_L_D), _(CEIL_L_D), _(FLOOR_L_D), _(ROUND_W_D), _(TRUNC_W_D), _(CEIL_W_D), _(FLOOR_W_D),
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    _(CVT_S_D), NULL, NULL, NULL, _(CVT_W_D), _(CVT_L_D), NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+};
+
+static void* const kInstructionTableFp_W[64] = {
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    _(CVT_S_W), _(CVT_D_W), NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+};
+
+static void* const kInstructionTableFp_L[64] = {
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    _(CVT_S_L), _(CVT_D_L), NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+};
+
 #undef _
 
 static void _execInstructionCop0(AzState* state, uint32_t opcode)
@@ -98,9 +142,72 @@ static void _execInstructionCop0(AzState* state, uint32_t opcode)
     }
 }
 
+static void _execInstructionFp_S(AzState* state, uint32_t opcode)
+{
+    uint8_t selector = opcode & 0x3f;
+    uint8_t ft = (opcode >> 16) & 0x1f;
+    uint8_t fs = (opcode >> 11) & 0x1f;
+    uint8_t fd = (opcode >>  6) & 0x1f;
+
+    AzProcInstructionFpR* instr = (AzProcInstructionFpR*)kInstructionTableFp_S[selector];
+    instr(state, ft, fs, fd);
+}
+
+static void _execInstructionFp_D(AzState* state, uint32_t opcode)
+{
+    uint8_t selector = opcode & 0x3f;
+    uint8_t ft = (opcode >> 16) & 0x1f;
+    uint8_t fs = (opcode >> 11) & 0x1f;
+    uint8_t fd = (opcode >>  6) & 0x1f;
+
+    AzProcInstructionFpR* instr = (AzProcInstructionFpR*)kInstructionTableFp_D[selector];
+    instr(state, ft, fs, fd);
+}
+
+static void _execInstructionFp_W(AzState* state, uint32_t opcode)
+{
+    uint8_t selector = opcode & 0x3f;
+    uint8_t ft = (opcode >> 16) & 0x1f;
+    uint8_t fs = (opcode >> 11) & 0x1f;
+    uint8_t fd = (opcode >>  6) & 0x1f;
+
+    AzProcInstructionFpR* instr = (AzProcInstructionFpR*)kInstructionTableFp_W[selector];
+    instr(state, ft, fs, fd);
+}
+
+static void _execInstructionFp_L(AzState* state, uint32_t opcode)
+{
+    uint8_t selector = opcode & 0x3f;
+    uint8_t ft = (opcode >> 16) & 0x1f;
+    uint8_t fs = (opcode >> 11) & 0x1f;
+    uint8_t fd = (opcode >>  6) & 0x1f;
+
+    AzProcInstructionFpR* instr = (AzProcInstructionFpR*)kInstructionTableFp_L[selector];
+    instr(state, ft, fs, fd);
+}
+
 static void _execInstructionCop1(AzState* state, uint32_t opcode)
 {
     uint8_t selector = (opcode >> 21) & 0x1f;
+
+    switch (selector)
+    {
+    case 0x10:
+        _execInstructionFp_S(state, opcode);
+        return;
+    case 0x11:
+        _execInstructionFp_D(state, opcode);
+        return;
+    case 0x14:
+        _execInstructionFp_W(state, opcode);
+        return;
+    case 0x15:
+        _execInstructionFp_L(state, opcode);
+        return;
+    default:
+        break;
+    }
+
     uint8_t rt = (opcode >> 16) & 0x1f;
     uint8_t rd = (opcode >> 11) & 0x1f;
 

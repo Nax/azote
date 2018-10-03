@@ -6,6 +6,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <stdlib.h>
+#include <math.h>
 #include <azote/azote.h>
 
 inline static uint8_t bswap8(uint8_t in)
@@ -61,6 +62,65 @@ inline static uint64_t sext32(uint32_t v)
     return ((int64_t)((int32_t)v));
 }
 
+inline static uint32_t fpS2W(float f)
+{
+    uint32_t value = signbit(f) ? 0x80000000 : 0x0;
+    value |= ((uint32_t)fabsf(f) & 0x7fffffff);
+    return value;
+}
+
+inline static uint64_t fpS2L(float f)
+{
+    uint64_t value = signbit(f) ? 0x8000000000000000 : 0x0;
+    value |= ((uint64_t)fabsf(f) & 0x7fffffffffffffff);
+    return value;
+}
+
+inline static uint32_t fpD2W(double d)
+{
+    uint32_t value = signbit(d) ? 0x80000000 : 0x0;
+    value |= ((uint32_t)fabs(d) & 0x7fffffff);
+    return value;
+}
+
+inline static uint64_t fpD2L(double d)
+{
+    uint64_t value = signbit(d) ? 0x8000000000000000 : 0x0;
+    value |= ((uint64_t)fabs(d) & 0x7fffffffffffffff);
+    return value;
+}
+
+inline static float fpW2S(uint32_t w)
+{
+    float value = (float)(w & 0x7fffffff);
+    if (w & 0x80000000)
+        value = -value;
+    return value;
+}
+
+inline static double fpW2D(uint32_t w)
+{
+    double value = (double)(w & 0x7fffffff);
+    if (w & 0x80000000)
+        value = -value;
+    return value;
+}
+
+inline static float fpL2S(uint64_t l)
+{
+    float value = (float)(l & 0x7fffffffffffffff);
+    if (l & 0x8000000000000000)
+        value = -value;
+    return value;
+}
+
+inline static double fpL2D(uint64_t l)
+{
+    double value = (double)(l & 0x7fffffffffffffff);
+    if (l & 0x8000000000000000)
+        value = -value;
+    return value;
+}
 
 void azDebugDumpState(AzState* state);
 void azDebugHexdumpRaw(char* addr, size_t len);
@@ -77,6 +137,7 @@ void azDebugHexdumpRaw(char* addr, size_t len);
 #define AZOTE_PROTO_REGIMM(x)   void x(AzState* state, uint8_t rs, uint16_t imm)
 #define AZOTE_PROTO_COP(x)      void x(AzState* state, uint8_t rt, uint8_t rd)
 #define AZOTE_PROTO_COPCO(x)    void x(AzState* state)
+#define AZOTE_PROTO_FP_R(x)     void x(AzState* state, uint8_t ft, uint8_t fs, uint8_t fd)
 
 AZOTE_PROTO_I(azOpADDI);
 AZOTE_PROTO_I(azOpADDIU);
@@ -200,12 +261,57 @@ AZOTE_PROTO_COP(azOpCFC1);
 AZOTE_PROTO_COP(azOpDMTC1);
 AZOTE_PROTO_COP(azOpDMFC1);
 
+AZOTE_PROTO_FP_R(azOpADD_S);
+AZOTE_PROTO_FP_R(azOpADD_D);
+AZOTE_PROTO_FP_R(azOpSUB_S);
+AZOTE_PROTO_FP_R(azOpSUB_D);
+AZOTE_PROTO_FP_R(azOpMUL_S);
+AZOTE_PROTO_FP_R(azOpMUL_D);
+AZOTE_PROTO_FP_R(azOpDIV_S);
+AZOTE_PROTO_FP_R(azOpDIV_D);
+AZOTE_PROTO_FP_R(azOpSQRT_S);
+AZOTE_PROTO_FP_R(azOpSQRT_D);
+AZOTE_PROTO_FP_R(azOpABS_S);
+AZOTE_PROTO_FP_R(azOpABS_D);
+AZOTE_PROTO_FP_R(azOpMOV_S);
+AZOTE_PROTO_FP_R(azOpMOV_D);
+AZOTE_PROTO_FP_R(azOpNEG_S);
+AZOTE_PROTO_FP_R(azOpNEG_D);
+AZOTE_PROTO_FP_R(azOpROUND_W_S);
+AZOTE_PROTO_FP_R(azOpROUND_W_D);
+AZOTE_PROTO_FP_R(azOpROUND_L_S);
+AZOTE_PROTO_FP_R(azOpROUND_L_D);
+AZOTE_PROTO_FP_R(azOpTRUNC_W_S);
+AZOTE_PROTO_FP_R(azOpTRUNC_W_D);
+AZOTE_PROTO_FP_R(azOpTRUNC_L_S);
+AZOTE_PROTO_FP_R(azOpTRUNC_L_D);
+AZOTE_PROTO_FP_R(azOpCEIL_W_S);
+AZOTE_PROTO_FP_R(azOpCEIL_W_D);
+AZOTE_PROTO_FP_R(azOpCEIL_L_S);
+AZOTE_PROTO_FP_R(azOpCEIL_L_D);
+AZOTE_PROTO_FP_R(azOpFLOOR_W_S);
+AZOTE_PROTO_FP_R(azOpFLOOR_W_D);
+AZOTE_PROTO_FP_R(azOpFLOOR_L_S);
+AZOTE_PROTO_FP_R(azOpFLOOR_L_D);
+
+AZOTE_PROTO_FP_R(azOpCVT_S_D);
+AZOTE_PROTO_FP_R(azOpCVT_S_W);
+AZOTE_PROTO_FP_R(azOpCVT_S_L);
+AZOTE_PROTO_FP_R(azOpCVT_D_S);
+AZOTE_PROTO_FP_R(azOpCVT_D_W);
+AZOTE_PROTO_FP_R(azOpCVT_D_L);
+AZOTE_PROTO_FP_R(azOpCVT_W_S);
+AZOTE_PROTO_FP_R(azOpCVT_W_D);
+AZOTE_PROTO_FP_R(azOpCVT_L_S);
+AZOTE_PROTO_FP_R(azOpCVT_L_D);
+
 typedef void (AzProcInstructionI)(AzState* state, uint8_t rs, uint8_t rt, uint16_t imm);
 typedef void (AzProcInstructionJ)(AzState* state, uint32_t target);
 typedef void (AzProcInstructionR)(AzState* state, uint8_t rs, uint8_t rt, uint8_t rd, uint8_t sa);
 typedef void (AzProcInstructionRegImm)(AzState* state, uint8_t rs, uint16_t imm);
 typedef void (AzProcInstructionCop)(AzState* state, uint8_t rt, uint8_t rd);
 typedef void (AzProcInstructionCopCo)(AzState* state);
+typedef void (AzProcInstructionFpR)(AzState* state, uint8_t ft, uint8_t fs, uint8_t fd);
 
 uint8_t     azMemoryRead8(AzState* state, uint64_t addr);
 uint16_t    azMemoryRead16(AzState* state, uint64_t addr);
