@@ -373,6 +373,8 @@ void azMemoryWrite64(AzState* state, uint64_t addr, uint64_t value);
 #define MI_INTR_PI  0x10
 #define MI_INTR_DP  0x20
 
+#define SP_
+
 #define VI_STATUS_REG   0x04400000
 #define VI_ORIGIN_REG   0x04400004
 #define VI_WIDTH_REG    0x04400008
@@ -406,10 +408,12 @@ void        azRcpClearInterrupt(AzState* state, uint8_t intr);
 void        azRcpRaiseInterrupt(AzState* state, uint8_t intr);
 void        azRcpCheckInterrupts(AzState* state);
 
+uint32_t    azRcpReadSP(AzState* state, uint32_t addr);
 uint32_t    azRcpReadMI(AzState* state, uint32_t addr);
 uint32_t    azRcpReadPI(AzState* state, uint32_t addr);
 uint32_t    azRcpReadVI(AzState* state, uint32_t addr);
 
+void        azRcpWriteSP(AzState* state, uint32_t addr, uint32_t value);
 void        azRcpWriteMI(AzState* state, uint32_t addr, uint32_t value);
 void        azRcpWritePI(AzState* state, uint32_t addr, uint32_t value);
 void        azRcpWriteVI(AzState* state, uint32_t addr, uint32_t value);
@@ -466,8 +470,7 @@ struct AzState_ {
     char*       rdramRegisters;
     char*       spDmem;
     char*       spImem;
-    char*       sp1Registers;
-    char*       sp2Registers;
+    uint32_t*   spRegisters;
     uint32_t*   miRegisters;
     uint32_t*   viRegisters;
     char*       aiRegisters;

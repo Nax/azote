@@ -26,10 +26,9 @@ type x(AzState* state, uint64_t vaddr)                                  \
         res = swap(*(type*)(state->spDmem + (addr & 0xfff)));           \
     else if (addr >= 0x04001000 && addr < 0x04002000)                   \
         res = swap(*(type*)(state->spImem + (addr & 0xfff)));           \
-    else if (addr >= 0x04040000 && addr < 0x04040020)                   \
-        res = swap(*(type*)(state->sp1Registers + (addr & 0xff)));      \
-    else if (addr >= 0x04080000 && addr < 0x04080008)                   \
-        res = swap(*(type*)(state->sp2Registers + (addr & 0xff)));      \
+    else if ((addr >= 0x04040000 && addr < 0x04040020)                  \
+        || (addr >= 0x0408000 && addr < 0x04080008))                    \
+        res = azRcpReadSP(state, addr);                                 \
     else if (addr >= 0x04300000 && addr < 0x04300010)                   \
         res = azRcpReadMI(state, addr);                                 \
     else if (addr >= 0x04400000 && addr < 0x04400038)                   \
@@ -75,10 +74,9 @@ void x(AzState* state, uint64_t vaddr, type value)                      \
         *(type*)(state->spDmem + (addr & 0xfff)) = swap(value);         \
     else if (addr >= 0x04001000 && addr < 0x04002000)                   \
         *(type*)(state->spImem + (addr & 0xfff)) = swap(value);         \
-    else if (addr >= 0x04040000 && addr < 0x04040020)                   \
-        *(type*)(state->sp1Registers + (addr & 0xff)) = swap(value);    \
-    else if (addr >= 0x04080000 && addr < 0x04080008)                   \
-        *(type*)(state->sp2Registers + (addr & 0xff)) = swap(value);    \
+    else if ((addr >= 0x04040000 && addr < 0x04040020)                  \
+        || (addr >= 0x0408000 && addr < 0x04080008))                    \
+        azRcpWriteSP(state, addr, value);                               \
     else if (addr >= 0x04300000 && addr < 0x04300010)                   \
         azRcpWriteMI(state, addr, value);                               \
     else if (addr >= 0x04400000 && addr < 0x04400038)                   \

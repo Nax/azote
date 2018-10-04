@@ -12,8 +12,7 @@ AzState* azInit()
     state->rdramRegisters = zalloc(0x28);
     state->spDmem = zalloc(0x1000);
     state->spImem = zalloc(0x1000);
-    state->sp1Registers = zalloc(0x20);
-    state->sp2Registers = zalloc(0x8);
+    state->spRegisters = zalloc(0x28);
     state->miRegisters = zalloc(0x10);
     state->viRegisters = zalloc(0x38);
     state->aiRegisters = zalloc(0x18);
@@ -34,9 +33,7 @@ void azExit(AzState* state)
         free(state->rdramRegisters);
         free(state->spDmem);
         free(state->spImem);
-        free(state->sp1Registers);
-        free(state->sp2Registers);
-        free(state->sp2Registers);
+        free(state->spRegisters);
         free(state->miRegisters);
         free(state->viRegisters);
         free(state->aiRegisters);
