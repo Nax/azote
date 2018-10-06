@@ -38,9 +38,9 @@ type x(AzState* state, uint64_t vaddr)                                  \
     else if (addr >= 0x04600000 && addr < 0x04600034)                   \
         res = azRcpReadPI(state, addr);                                 \
     else if (addr >= 0x04700000 && addr < 0x04700020)                   \
-            res = swap(*(type*)(state->piRegisters + (addr & 0xff)));   \
+            res = swap(*(type*)(state->riRegisters + (addr & 0xff)));   \
     else if (addr >= 0x04800000 && addr < 0x0480001c)                   \
-        res = swap(*(type*)(state->siRegisters + (addr & 0xff)));       \
+        res = azRcpReadSI(state, addr);                                 \
     else if (addr >= 0x10000000 && addr < 0x10000000 + state->cartSize) \
         res = swap(*(type*)(state->cart + (addr & 0xfffffff)));         \
     else if (addr >= 0x1fc007c0 && addr < 0x1fc00800)                   \
@@ -88,7 +88,7 @@ void x(AzState* state, uint64_t vaddr, type value)                      \
     else if (addr >= 0x04700000 && addr < 0x04700020)                   \
         *(type*)(state->riRegisters + (addr & 0xff)) = swap(value);     \
     else if (addr >= 0x04800000 && addr < 0x0480001c)                   \
-        *(type*)(state->siRegisters + (addr & 0xff)) = swap(value);     \
+        azRcpWritePI(state, addr, value);                               \
     else if (addr >= 0x1fc007c0 && addr < 0x1fc00800)                   \
         *(type*)(state->pifram + ((addr & 0xff - 0xc0))) = swap(value); \
     else                                                                \

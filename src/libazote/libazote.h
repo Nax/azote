@@ -429,12 +429,14 @@ uint32_t    azRcpReadMI(AzState* state, uint32_t addr);
 uint32_t    azRcpReadPI(AzState* state, uint32_t addr);
 uint32_t    azRcpReadAI(AzState* state, uint32_t addr);
 uint32_t    azRcpReadVI(AzState* state, uint32_t addr);
+uint32_t    azRcpReadSI(AzState* state, uint32_t addr);
 
 void        azRcpWriteSP(AzState* state, uint32_t addr, uint32_t value);
 void        azRcpWriteMI(AzState* state, uint32_t addr, uint32_t value);
 void        azRcpWritePI(AzState* state, uint32_t addr, uint32_t value);
 void        azRcpWriteAI(AzState* state, uint32_t addr, uint32_t value);
 void        azRcpWriteVI(AzState* state, uint32_t addr, uint32_t value);
+void        azRcpWriteSI(AzState* state, uint32_t addr, uint32_t value);
 
 typedef union AzReg_    AzReg;
 typedef struct AzCPU_   AzCPU;
@@ -494,7 +496,7 @@ struct AzState_ {
     uint32_t*   aiRegisters;
     uint32_t*   piRegisters;
     char*       riRegisters;
-    char*       siRegisters;
+    uint32_t*   siRegisters;
     char*       pifram;
     unsigned    debug:1;
     unsigned    verbose:1;
