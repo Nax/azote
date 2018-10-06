@@ -1,5 +1,21 @@
 #include <libazote/libazote.h>
 
+static void _dmaRead(AzState* state)
+{
+    uint64_t size;
+    uint32_t ramAddr;
+    uint32_t romAddr;
+
+    puts("DMA (Read)");
+    size = (uint64_t)state->piRegisters[3] + 1;
+    ramAddr = state->piRegisters[0];
+    romAddr = state->piRegisters[1];
+    printf("0x%08x -> 0x%08x (%llu bytes)\n", romAddr, ramAddr, size);
+    //getchar();
+    memcpy(state->rdram + ramAddr, state->cart + (romAddr & 0x0fffffff), size);
+    azRcpRaiseInterrupt(state, RCP_INTR_PI);
+}
+
 static void _dmaWrite(AzState* state)
 {
     uint64_t size;
@@ -64,6 +80,7 @@ void azRcpWritePI(AzState* state, uint32_t addr, uint32_t value)
     case PI_RD_LEN_REG:
         state->piRegisters[2] = value;
         // TODO: Implement this
+        _dmaRead(state);
         return;
     case PI_WR_LEN_REG:
         state->piRegisters[3] = value;

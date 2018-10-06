@@ -373,7 +373,16 @@ void azMemoryWrite64(AzState* state, uint64_t addr, uint64_t value);
 #define MI_INTR_PI  0x10
 #define MI_INTR_DP  0x20
 
-#define SP_
+#define SP_MEM_ADDR_REG     0x04040000
+#define SP_DRAM_ADDR_REG    0x04040004
+#define SP_RD_LEN_REG       0x04040008
+#define SP_WR_LEN_REG       0x0404000c
+#define SP_STATUS_REG       0x04040010
+#define SP_DMA_FULL_REG     0x04040014
+#define SP_DMA_BUSY_REG     0x04040018
+#define SP_SEMAPHORE_REG    0x0404001c
+#define SP_PC_REG           0x04080000
+#define SP_IBIST_REG        0x04080004
 
 #define VI_STATUS_REG   0x04400000
 #define VI_ORIGIN_REG   0x04400004
@@ -389,6 +398,13 @@ void azMemoryWrite64(AzState* state, uint64_t addr, uint64_t value);
 #define VI_V_BURST_REG  0x0440002c
 #define VI_X_SCALE_REG  0x04400030
 #define VI_Y_SCALE_REG  0x04400034
+
+#define AI_DRAM_ADDR_REG    0x04500000
+#define AI_LEN_REG          0x04500004
+#define AI_CONTROL_REG      0x04500008
+#define AI_STATUS_REG       0x0450000c
+#define AI_DACRATE_REG      0x04500010
+#define AI_BITRATE_REG      0x04500014
 
 #define PI_DRAM_ADDR_REG        0x04600000
 #define PI_CART_ADDR_REG        0x04600004
@@ -411,11 +427,13 @@ void        azRcpCheckInterrupts(AzState* state);
 uint32_t    azRcpReadSP(AzState* state, uint32_t addr);
 uint32_t    azRcpReadMI(AzState* state, uint32_t addr);
 uint32_t    azRcpReadPI(AzState* state, uint32_t addr);
+uint32_t    azRcpReadAI(AzState* state, uint32_t addr);
 uint32_t    azRcpReadVI(AzState* state, uint32_t addr);
 
 void        azRcpWriteSP(AzState* state, uint32_t addr, uint32_t value);
 void        azRcpWriteMI(AzState* state, uint32_t addr, uint32_t value);
 void        azRcpWritePI(AzState* state, uint32_t addr, uint32_t value);
+void        azRcpWriteAI(AzState* state, uint32_t addr, uint32_t value);
 void        azRcpWriteVI(AzState* state, uint32_t addr, uint32_t value);
 
 typedef union AzReg_    AzReg;
@@ -473,7 +491,7 @@ struct AzState_ {
     uint32_t*   spRegisters;
     uint32_t*   miRegisters;
     uint32_t*   viRegisters;
-    char*       aiRegisters;
+    uint32_t*   aiRegisters;
     uint32_t*   piRegisters;
     char*       riRegisters;
     char*       siRegisters;
