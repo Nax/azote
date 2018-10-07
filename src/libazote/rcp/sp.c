@@ -97,6 +97,8 @@ void azRcpWriteSP(AzState* state, uint32_t addr, uint32_t value)
         else if (value & 0x00400000) state->spRegisters[4] |= 0x2000;           // set signal 6
         if (value & 0x00800000) state->spRegisters[4] &= ~(0x4000);             // clear signal 7
         else if (value & 0x01000000) state->spRegisters[4] |= 0x4000;           // set signal 7
+        printf("RSP: %s\n", (state->spRegisters[4] & 0x01) ? "HALT" : "RUN");
+        getchar();
         return;
     default:
         return;

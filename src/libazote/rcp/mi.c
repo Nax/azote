@@ -6,10 +6,9 @@ uint32_t azRcpReadMI(AzState* state, uint32_t addr)
     switch (addr)
     {
     case MI_INIT_MODE_REG:
-        // TODO: Implement me
-        return 0;
+        return state->miRegisters[0];
     case MI_VERSION_REG:
-        return 0x01010101;
+        return 0x02020102;
     case MI_INTR_REG:
         return state->miRegisters[2];
     case MI_INTR_MASK_REG:
@@ -24,6 +23,14 @@ void azRcpWriteMI(AzState* state, uint32_t addr, uint32_t value)
     switch (addr)
     {
     case MI_INIT_MODE_REG:
+        state->miRegisters[0] = (state->miRegisters[0] & ~(0x7f)) | (value & 0x7f);
+        if (value & 0x0080) state->miRegisters[0] &= ~(0x0080);
+        else if (value & 0x0100) state->miRegisters[0] |= 0x0080;
+        if (value & 0x0200) state->miRegisters[0] &= ~(0x0100);
+        else if (value & 0x0400) state->miRegisters[0] |= 0x0100;
+        if (value & 0x0800) azRcpClearInterrupt(state, RCP_INTR_DP);
+        if (value & 0x1000) state->miRegisters[0] &= ~(0x0200);
+        else if (value & 0x2000) state->miRegisters[0] |= 0x0200;
         return;
     case MI_VERSION_REG:
         return;

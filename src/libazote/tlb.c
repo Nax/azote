@@ -3,6 +3,7 @@
 uint32_t _lookupTLB(AzState* state, uint32_t vaddr)
 {
     printf("TLB, vaddr: 0x%08x\n", vaddr);
+    printf("PC:  0x%016llx\n", state->cpu.pc);
     getchar();
     return vaddr;
 }

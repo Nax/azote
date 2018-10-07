@@ -420,10 +420,16 @@ void azMemoryWrite64(AzState* state, uint64_t addr, uint64_t value);
 #define PI_BSD_DOM2_PGS_REG     0x0460002c
 #define PI_BSD_DOM2_RLS_REG     0x04600030
 
+#define SI_DRAM_ADDR_REG        0x04800000
+#define SI_PIF_ADDR_RD64B_REG   0x04800004
+#define SI_PIF_ADDR_WR64B_REG   0x04800010
+#define SI_STATUS_REG           0x04800018
+
 void        azRcpClearInterrupt(AzState* state, uint8_t intr);
 void        azRcpRaiseInterrupt(AzState* state, uint8_t intr);
 void        azRcpCheckInterrupts(AzState* state);
 
+uint32_t    azReadPIF(AzState* state, uint32_t addr);
 uint32_t    azRcpReadSP(AzState* state, uint32_t addr);
 uint32_t    azRcpReadMI(AzState* state, uint32_t addr);
 uint32_t    azRcpReadPI(AzState* state, uint32_t addr);
@@ -431,6 +437,7 @@ uint32_t    azRcpReadAI(AzState* state, uint32_t addr);
 uint32_t    azRcpReadVI(AzState* state, uint32_t addr);
 uint32_t    azRcpReadSI(AzState* state, uint32_t addr);
 
+void        azWritePIF(AzState* state, uint32_t addr, uint32_t value);
 void        azRcpWriteSP(AzState* state, uint32_t addr, uint32_t value);
 void        azRcpWriteMI(AzState* state, uint32_t addr, uint32_t value);
 void        azRcpWritePI(AzState* state, uint32_t addr, uint32_t value);

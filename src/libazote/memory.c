@@ -27,7 +27,7 @@ type x(AzState* state, uint64_t vaddr)                                  \
     else if (addr >= 0x04001000 && addr < 0x04002000)                   \
         res = swap(*(type*)(state->spImem + (addr & 0xfff)));           \
     else if ((addr >= 0x04040000 && addr < 0x04040020)                  \
-        || (addr >= 0x0408000 && addr < 0x04080008))                    \
+        || (addr >= 0x04080000 && addr < 0x04080008))                   \
         res = azRcpReadSP(state, addr);                                 \
     else if (addr >= 0x04300000 && addr < 0x04300010)                   \
         res = azRcpReadMI(state, addr);                                 \
@@ -44,7 +44,7 @@ type x(AzState* state, uint64_t vaddr)                                  \
     else if (addr >= 0x10000000 && addr < 0x10000000 + state->cartSize) \
         res = swap(*(type*)(state->cart + (addr & 0xfffffff)));         \
     else if (addr >= 0x1fc007c0 && addr < 0x1fc00800)                   \
-        res = swap(*(type*)(state->pifram + ((addr & 0xff) - 0xc0)));   \
+        res = azReadPIF(state, addr);                                   \
     else                                                                \
         res = _badIO(state, addr, 0, 0);                                \
     return res;                                                         \
@@ -75,7 +75,7 @@ void x(AzState* state, uint64_t vaddr, type value)                      \
     else if (addr >= 0x04001000 && addr < 0x04002000)                   \
         *(type*)(state->spImem + (addr & 0xfff)) = swap(value);         \
     else if ((addr >= 0x04040000 && addr < 0x04040020)                  \
-        || (addr >= 0x0408000 && addr < 0x04080008))                    \
+        || (addr >= 0x04080000 && addr < 0x04080008))                   \
         azRcpWriteSP(state, addr, value);                               \
     else if (addr >= 0x04300000 && addr < 0x04300010)                   \
         azRcpWriteMI(state, addr, value);                               \
@@ -88,9 +88,9 @@ void x(AzState* state, uint64_t vaddr, type value)                      \
     else if (addr >= 0x04700000 && addr < 0x04700020)                   \
         *(type*)(state->riRegisters + (addr & 0xff)) = swap(value);     \
     else if (addr >= 0x04800000 && addr < 0x0480001c)                   \
-        azRcpWritePI(state, addr, value);                               \
+        azRcpWriteSI(state, addr, value);                               \
     else if (addr >= 0x1fc007c0 && addr < 0x1fc00800)                   \
-        *(type*)(state->pifram + ((addr & 0xff - 0xc0))) = swap(value); \
+        azWritePIF(state, addr, value);                                 \
     else                                                                \
         _badIO(state, addr, 1, 0);                                      \
 }

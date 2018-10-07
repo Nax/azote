@@ -54,6 +54,11 @@ void azLoadFile(AzState* state, const char* path)
     state->cop0.registers[16] = 0x0006e463;
     state->cop0.registers[30] = 0xffffffff;
 
+    state->piRegisters[5] = 0x80;
+    state->piRegisters[6] = 0x37;
+    state->piRegisters[7] = 0x12;
+    state->piRegisters[8] = 0x40;
+
     memcpy(state->spDmem, state->cart, 0x1000);
     azDebugDumpState(state);
 }

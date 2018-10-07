@@ -378,7 +378,7 @@ uint64_t _getTimeNano()
 
 void azRun(AzState* state)
 {
-    static const uint64_t kPeriod = 16666666;
+    static const uint64_t kPeriod = 1666666600;
     uint64_t referenceTime;
     uint64_t dt;
 
