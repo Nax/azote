@@ -3,6 +3,7 @@
 
 static uint64_t _badIO(AzState* state, uint64_t addr, int write, int align)
 {
+    return 0;
     printf("*** Bad io (%s%s) at: 0x%016llx   PC: 0x%016llx\n", (write ? "W" : "R"), (align ? ", unaligned" : ""), addr, state->cpu.pc);
     state->debug = 1;
     getchar();

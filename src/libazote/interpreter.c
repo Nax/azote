@@ -23,6 +23,61 @@ static uint8_t const kInstructionTableCommonType[64] = {
 
 #define _(x)   (azOp ## x)
 
+#define OP_SPECIAL  0x00
+#define OP_REGIMM   0x01
+#define OP_J        0x02
+#define OP_JAL      0x03
+#define OP_BEQ      0x04
+#define OP_BNE      0x05
+#define OP_BLEZ     0x06
+#define OP_BGTZ     0x07
+#define OP_ADDI     0x08
+#define OP_ADDIU    0x09
+#define OP_SLTI     0x0a
+#define OP_SLTIU    0x0b
+#define OP_ANDI     0x0c
+#define OP_ORI      0x0d
+#define OP_XORI     0x0e
+#define OP_LUI      0x0f
+#define OP_COP0     0x10
+#define OP_COP1     0x11
+#define OP_COP2     0x12
+#define OP_BEQL     0x14
+#define OP_BNEL     0x15
+#define OP_BLEZL    0x16
+#define OP_BGTZL    0x17
+#define OP_DADDI    0x18
+#define OP_DADDIU   0x19
+#define OP_LDL      0x1a
+#define OP_LDR      0x1b
+#define OP_LB       0x20
+#define OP_LH       0x21
+#define OP_LWL      0x22
+#define OP_LW       0x23
+#define OP_LBU      0x24
+#define OP_LHU      0x25
+#define OP_LWR      0x26
+#define OP_LWU      0x27
+#define OP_SB       0x28
+#define OP_SH       0x29
+#define OP_SWL      0x2a
+#define OP_SW       0x2b
+#define OP_SDL      0x2c
+#define OP_SDR      0x2d
+#define OP_SWR      0x2e
+#define OP_CACHE    0x2f
+#define OP_LL       0x30
+#define OP_LWC1     0x31
+#define OP_LLD      0x34
+#define OP_LDC1     0x35
+#define OP_LD       0x37
+#define OP_SC       0x38
+#define OP_SWC1     0x39
+#define OP_SCD      0x3c
+#define OP_SDC1     0x3d
+#define OP_SD       0x3f
+
+
 static void* kInstructionTableCommon[64] = {
     NULL, NULL, _(J), _(JAL), _(BEQ), _(BNE), _(BLEZ), _(BGTZ),
     _(ADDI), _(ADDIU), _(SLTI), _(SLTIU), _(ANDI), _(ORI), _(XORI), _(LUI),
@@ -299,20 +354,6 @@ static void _execInstruction(AzState* state, uint32_t opcode)
     }
 }
 
-static void _handleTimer(AzState* state)
-{
-    state->cop0.registers[9]++;
-    if (state->cop0.registers[9] > 10000000)
-        state->verbose = 1;
-    if (state->cop0.registers[9] == state->cop0.registers[11])
-    {
-        puts("*** TIMER !!! ***");
-        getchar();
-    }
-    if ((state->cop0.registers[9] % (1 << 20)) == 0)
-        ;//printf("Count: 0x%016llx   Compare: 0x%016llx\n", state->cop0.registers[9], state->cop0.registers[11]);
-}
-
 static void _handleInterrupts(AzState* state)
 {
     uint64_t status = state->cop0.registers[12];
@@ -337,37 +378,129 @@ static void _handleInterrupts(AzState* state)
 
 void _runCycles(AzState* state, uint32_t cycles)
 {
-    uint64_t pcBak;
+    uint64_t pc;
+    uint64_t pc2;
+    uint32_t op;
+
+    pc = state->cpu.pc;
+    pc2 = state->cpu.pc2;
 
     for (uint32_t i = 0; i < cycles; ++i)
     {
-        uint32_t opcode = azMemoryRead32(state, state->cpu.pc);
-        /*if (state->verbose)
-            printf("PC:  0x%016llx   Op: 0x%08x\n", state->cpu.pc, opcode);*/
-        if (state->debug && 0)
-        {
-            azDebugDumpState(state);
-            char c = getchar();
-
-            if (c == 'c')
-                state->debug = 0;
-            
-            while (c != '\n')
-                c = getchar();
-        }
-        pcBak = state->cpu.pc;
-        state->cpu.pc = state->cpu.pc2;
-        state->cpu.pc2 += 4;
-        _execInstruction(state, opcode);
-        if (state->cpu.pc == 0xffffffff)
-        {
-            puts("*** BAD PC2 ***");
-            printf("Backup PC: 0x%016llx\n", pcBak);
-            azDebugDumpState(state);
-            getchar();
-        }
-        _handleTimer(state);
         _handleInterrupts(state);
+        uint32_t opcode = azMemoryRead32(state, pc);
+        pc = pc2;
+        pc2 += 4;
+
+        switch (opcode >> 26)
+        {
+        case OP_SPECIAL:
+            break;
+        case OP_REGIMM:
+            break;
+        case OP_J:
+            break;
+        case OP_JAL:
+            break;
+        case OP_BEQ:
+            break;
+        case OP_BNE:
+            break;
+        case OP_BLEZ:
+            break;
+        case OP_BGTZ:
+            break;
+        case OP_ADDI:
+            break;
+        case OP_ADDIU:
+            break;
+        case OP_SLTI:
+            break;
+        case OP_SLTIU:
+            break;
+        case OP_ANDI:
+            break;
+        case OP_ORI:
+            break;
+        case OP_XORI:
+            break;
+        case OP_LUI:
+            break;
+        case OP_COP0:
+            break;
+        case OP_COP1:
+            break;
+        case OP_COP2:
+            break;
+        case OP_BEQL:
+            break;
+        case OP_BNEL:
+            break;
+        case OP_BLEZL:
+            break;
+        case OP_BGTZL:
+            break;
+        case OP_DADDI:
+            break;
+        case OP_DADDIU:
+            break;
+        case OP_LDL:
+            break;
+        case OP_LDR:
+            break;
+        case OP_LB:
+            break;
+        case OP_LH:
+            break;
+        case OP_LWL:
+            break;
+        case OP_LW:
+            break;
+        case OP_LBU:
+            break;
+        case OP_LHU:
+            break;
+        case OP_LWR:
+            break;
+        case OP_LWU:
+            break;
+        case OP_SB:
+            break;
+        case OP_SH:
+            break;
+        case OP_SWL:
+            break;
+        case OP_SW:
+            break;
+        case OP_SDL:
+            break;
+        case OP_SDR:
+            break;
+        case OP_SWR:
+            break;
+        case OP_CACHE:
+            break;
+        case OP_LL:
+            break;
+        case OP_LWC1:
+            break;
+        case OP_LLD:
+            break;
+        case OP_LDC1:
+            break;
+        case OP_LD:
+            break;
+        case OP_SC:
+            break;
+        case OP_SWC1:
+            break;
+        case OP_SCD:
+            break;
+        case OP_SDC1:
+            break;
+        case OP_SD:
+            break;
+        }
     }
 }
 
@@ -376,7 +509,7 @@ uint64_t _getTimeNano()
     return clock_gettime_nsec_np(CLOCK_UPTIME_RAW);
 }
 
-void azOldRun(AzState* state)
+void azRun(AzState* state)
 {
     static const uint32_t granularity = 8192;
     static const uint64_t kPeriod = 16666666;
