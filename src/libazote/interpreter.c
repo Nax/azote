@@ -522,36 +522,55 @@ void _runCycles(AzState* state, uint32_t cycles)
             }
             break;
         case OP_DADDI:
+            if (RT)
+                regs[RT].i64 = regs[RS].i64 + SIMM;
             break;
         case OP_DADDIU:
+            if (RT)
+                regs[RT].i64 = regs[RS].i64 + SIMM;
             break;
         case OP_LDL:
             break;
         case OP_LDR:
             break;
         case OP_LB:
+            if (RT)
+                regs[RT].i64 = (int8_t)azMemoryRead8(state, regs[RS].u64 + SIMM);
             break;
         case OP_LH:
+            if (RT)
+                regs[RT].i64 = (int16_t)azMemoryRead16(state, regs[RS].u64 + SIMM);
             break;
         case OP_LWL:
             break;
         case OP_LW:
+            if (RT)
+                regs[RT].i64 = (int32_t)azMemoryRead32(state, regs[RS].u64 + SIMM);
             break;
         case OP_LBU:
+            if (RT)
+                regs[RT].u64 = azMemoryRead8(state, regs[RS].u64 + SIMM);
             break;
         case OP_LHU:
+            if (RT)
+                regs[RT].u64 = azMemoryRead16(state, regs[RS].u64 + SIMM);
             break;
         case OP_LWR:
             break;
         case OP_LWU:
+            if (RT)
+                regs[RT].u64 = azMemoryRead32(state, regs[RS].u64 + SIMM);
             break;
         case OP_SB:
+            azMemoryWrite8(state, regs[RS].u64 + SIMM, regs[RT].u64);
             break;
         case OP_SH:
+            azMemoryWrite16(state, regs[RS].u64 + SIMM, regs[RT].u64);
             break;
         case OP_SWL:
             break;
         case OP_SW:
+            azMemoryWrite32(state, regs[RS].u64 + SIMM, regs[RT].u64);
             break;
         case OP_SDL:
             break;
