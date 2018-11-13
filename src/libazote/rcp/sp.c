@@ -6,7 +6,7 @@ static void _dmaReadDRAM(AzState* state)
     uint32_t ramAddr;
     uint32_t spAddr;
 
-    puts("SP DMA (Read)");
+    //puts("SP DMA (Read)");
     size = (uint64_t)state->spRegisters[2] + 1;
     ramAddr = state->piRegisters[0];
     spAddr = state->piRegisters[1];
@@ -22,7 +22,7 @@ static void _dmaWriteDRAM(AzState* state)
     uint32_t ramAddr;
     uint32_t spAddr;
 
-    puts("SP DMA (Write)");
+    //puts("SP DMA (Write)");
     size = (uint64_t)state->spRegisters[2] + 1;
     ramAddr = state->piRegisters[0];
     spAddr = state->piRegisters[1];
@@ -34,7 +34,7 @@ static void _dmaWriteDRAM(AzState* state)
 
 uint32_t azRcpReadSP(AzState* state, uint32_t addr)
 {
-    printf("SP Read:  0x%08x\n", addr);
+    //printf("SP Read:  0x%08x\n", addr);
     switch (addr)
     {
     case SP_MEM_ADDR_REG:
@@ -54,7 +54,7 @@ uint32_t azRcpReadSP(AzState* state, uint32_t addr)
 
 void azRcpWriteSP(AzState* state, uint32_t addr, uint32_t value)
 {
-    printf("SP Write: 0x%08x (0x%08x)\n", addr, value);
+    //printf("SP Write: 0x%08x (0x%08x)\n", addr, value);
     switch (addr)
     {
     case SP_MEM_ADDR_REG:

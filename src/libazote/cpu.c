@@ -378,19 +378,34 @@ uint64_t _getTimeNano()
 
 void azRun(AzState* state)
 {
-    static const uint64_t kPeriod = 1666666600;
+    static const uint32_t granularity = 8192;
+    static const uint64_t kPeriod = 16666666;
+    uint64_t now;
     uint64_t referenceTime;
+    uint64_t baseTime;
     uint64_t dt;
+    uint64_t cycles;
 
+    cycles = 0;
     referenceTime = _getTimeNano();
+    baseTime = _getTimeNano();
     for (;;)
     {
-        _runCycles(state, 8192);
-        dt = _getTimeNano() - referenceTime;
+        _runCycles(state, granularity);
+        cycles += granularity;
+        now = _getTimeNano();
+        dt = now - referenceTime;
         if (dt >= kPeriod)
         {
             referenceTime += kPeriod;
             azRcpRaiseInterrupt(state, RCP_INTR_VI);
+        }
+        if ((now - baseTime) >= 1000000000)
+        {
+            double instrPerSecond = (double)cycles / ((double)(now - baseTime) * 1e-9);
+            printf("Vi/s: %f\n", instrPerSecond);
+            baseTime = now;
+            cycles = 0;
         }
     }
 }
