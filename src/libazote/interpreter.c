@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h>
 #include <time.h>
 #include <libazote/libazote.h>
 
@@ -376,55 +377,99 @@ static void _handleInterrupts(AzState* state)
     }
 }
 
+#define RS      ((op >> 21) & 0x1f)
+#define RT      ((op >> 16) & 0x1f)
+#define IMM     (op & 0xffff)
+#define SIMM    ((int16_t)(op & 0xffff))
+
 void _runCycles(AzState* state, uint32_t cycles)
 {
+    uint32_t op;
     uint64_t pc;
     uint64_t pc2;
-    uint32_t op;
+    AzReg regs[32];
 
     pc = state->cpu.pc;
     pc2 = state->cpu.pc2;
+    memcpy(regs, state->cpu.registers, 32 * sizeof(AzReg));
 
     for (uint32_t i = 0; i < cycles; ++i)
     {
         _handleInterrupts(state);
-        uint32_t opcode = azMemoryRead32(state, pc);
+        op = azMemoryRead32(state, pc);
         pc = pc2;
         pc2 += 4;
 
-        switch (opcode >> 26)
+        switch (op >> 26)
         {
         case OP_SPECIAL:
             break;
         case OP_REGIMM:
             break;
         case OP_J:
+            pc2 = (pc & 0xfffffffff0000000) | ((op & 0x3ffffff) << 2);
             break;
         case OP_JAL:
+            regs[31].u64 = pc2;
+            pc2 = (pc & 0xfffffffff0000000) | ((op & 0x3ffffff) << 2);
             break;
         case OP_BEQ:
+            if (regs[RS].u64 == regs[RT].u64)
+                pc2 = pc + (SIMM << 2);
             break;
         case OP_BNE:
+            if (regs[RS].u64 != regs[RT].u64)
+                pc2 = pc + (SIMM << 2);
             break;
         case OP_BLEZ:
+            if (regs[RS].u64 <= 0)
+                pc2 = pc + (SIMM << 2);
             break;
         case OP_BGTZ:
+            if (regs[RS].u64 > 0)
+                pc2 = pc + (SIMM << 2);
             break;
         case OP_ADDI:
+            if (RT)
+                regs[RT].i64 = regs[RS].i32 + SIMM;
             break;
         case OP_ADDIU:
+            if (RT)
+                regs[RT].i64 = regs[RS].i32 + SIMM;
             break;
         case OP_SLTI:
+            if (RT)
+            {
+                if (regs[RS].i64 < SIMM)
+                    regs[RT].u64 = 1;
+                else
+                    regs[RT].u64 = 0;
+            }
             break;
         case OP_SLTIU:
+            if (RT)
+            {
+                if (regs[RS].u64 < IMM)
+                    regs[RT].u64 = 1;
+                else
+                    regs[RT].u64 = 0;
+            }
             break;
         case OP_ANDI:
+            if (RT)
+                regs[RT].u64 = regs[RS].u64 & IMM;
             break;
         case OP_ORI:
+            if (RT)
+                regs[RT].u64 = regs[RS].u64 | IMM;
             break;
         case OP_XORI:
+            if (RT)
+                regs[RT].u64 = regs[RS].u64 ^ IMM;
             break;
         case OP_LUI:
+            if (RT)
+                regs[RT].i64 = (SIMM << 16);
             break;
         case OP_COP0:
             break;
@@ -433,12 +478,48 @@ void _runCycles(AzState* state, uint32_t cycles)
         case OP_COP2:
             break;
         case OP_BEQL:
+            if (regs[RS].u64 == regs[RT].u64)
+            {
+                pc2 = pc + (SIMM << 2);
+            }
+            else
+            {
+                pc2 += 4;
+                pc += 4;
+            }
             break;
         case OP_BNEL:
+            if (regs[RS].u64 != regs[RT].u64)
+            {
+                pc2 = pc + (SIMM << 2);
+            }
+            else
+            {
+                pc2 += 4;
+                pc += 4;
+            }
             break;
         case OP_BLEZL:
+            if (regs[RS].u64 <= 0)
+            {
+                pc2 = pc + (SIMM << 2);
+            }
+            else
+            {
+                pc2 += 4;
+                pc += 4;
+            }
             break;
         case OP_BGTZL:
+            if (regs[RS].u64 > 0)
+            {
+                pc2 = pc + (SIMM << 2);
+            }
+            else
+            {
+                pc2 += 4;
+                pc += 4;
+            }
             break;
         case OP_DADDI:
             break;
@@ -502,6 +583,10 @@ void _runCycles(AzState* state, uint32_t cycles)
             break;
         }
     }
+
+    state->cpu.pc = pc;
+    state->cpu.pc2 = pc2;
+    memcpy(state->cpu.registers, regs, 32 * sizeof(AzReg));
 }
 
 uint64_t _getTimeNano()
@@ -511,7 +596,7 @@ uint64_t _getTimeNano()
 
 void azRun(AzState* state)
 {
-    static const uint32_t granularity = 8192;
+    static const uint32_t granularity = 256;
     static const uint64_t kPeriod = 16666666;
     uint64_t now;
     uint64_t referenceTime;
@@ -531,12 +616,12 @@ void azRun(AzState* state)
         if (dt >= kPeriod)
         {
             referenceTime += kPeriod;
-            azRcpRaiseInterrupt(state, RCP_INTR_VI);
+            //azRcpRaiseInterrupt(state, RCP_INTR_VI);
         }
         if ((now - baseTime) >= 1000000000)
         {
             double instrPerSecond = (double)cycles / ((double)(now - baseTime) * 1e-9);
-            printf("Vi/s: %f\n", instrPerSecond);
+            printf("Vi/s: %.2fM   (PC: 0x%016llx)\n", instrPerSecond / 1000000, state->cpu.pc);
             baseTime = now;
             cycles = 0;
         }
