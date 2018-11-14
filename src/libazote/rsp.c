@@ -21,7 +21,7 @@ static void _runCycles(AzState* state, uint32_t cycles)
     for (uint32_t i = 0; i < cycles; ++i)
     {
         op = bswap32(*(uint32_t*)(state->spImem + (pc & 0xfff)));
-        pc = pc2;
+        pc = pc2 & 0xfff;
         pc2 += 4;
 
         switch (op >> 26)
@@ -177,7 +177,18 @@ static void _runCycles(AzState* state, uint32_t cycles)
             if (RT) regs[RT] = ((uint32_t)IMM << 16);
             break;
         case OP_COP0:
-            TRAP;
+            switch (RS)
+            {
+            default:
+                TRAP;
+                break;
+            case OP_COP_MF:
+                if (RT) regs[RT] = azRspControlRead(state, RD);
+                break;
+            case OP_COP_MT:
+                azRspControlWrite(state, RD, regs[RT]);
+                break;
+            }
             break;
         case OP_COP2:
             TRAP;

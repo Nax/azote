@@ -168,6 +168,23 @@ void azRunRSP(AzState* state);
 #define COP0_REG_TAGHI          29
 #define COP0_REG_ERROR_EPC      30
 
+#define RSP_CREG_DMA_CACHE          0
+#define RSP_CREG_DMA_DRAM           1
+#define RSP_CREG_DMA_READ_LENGTH    2
+#define RSP_CREG_DMA_WRITE_LENGTH   3
+#define RSP_CREG_SP_STATUS          4
+#define RSP_CREG_DMA_FULL           5
+#define RSP_CREG_DMA_BUSY           6
+#define RSP_CREG_SP_RESERVED        7
+#define RSP_CREG_CMD_START          8
+#define RSP_CREG_CMD_END            9
+#define RSP_CREG_CMD_CURRENT        10
+#define RSP_CREG_CMD_STATUS         11
+#define RSP_CREG_CMD_CLOCK          12
+#define RSP_CREG_CMD_BUSY           13
+#define RSP_CREG_CMD_PIPE_BUSY      14
+#define RSP_CREG_CMD_TMEM_BUSY      15
+
 /* RCP */
 
 #define RCP_INTR_SP 0
@@ -241,6 +258,9 @@ void azRunRSP(AzState* state);
 #define SI_PIF_ADDR_WR64B_REG   0x04800010
 #define SI_STATUS_REG           0x04800018
 
+uint32_t    azRspControlRead(AzState* state, uint8_t creg);
+void        azRspControlWrite(AzState* state, uint8_t creg, uint32_t value);
+
 void        azRcpClearInterrupt(AzState* state, uint8_t intr);
 void        azRcpRaiseInterrupt(AzState* state, uint8_t intr);
 void        azRcpCheckInterrupts(AzState* state);
@@ -260,6 +280,8 @@ void        azRcpWritePI(AzState* state, uint32_t addr, uint32_t value);
 void        azRcpWriteAI(AzState* state, uint32_t addr, uint32_t value);
 void        azRcpWriteVI(AzState* state, uint32_t addr, uint32_t value);
 void        azRcpWriteSI(AzState* state, uint32_t addr, uint32_t value);
+
+typedef _Atomic uint32_t atomic_u32;
 
 typedef struct AzCOP0_  AzCOP0;
 typedef struct AzCOP1_  AzCOP1;
@@ -287,6 +309,7 @@ typedef struct {
     uint16_t    pc;
     uint16_t    pc2;
     uint32_t    registers[32];
+    atomic_u32  cregs[16];
 } AzCoreRSP;
 
 struct AzCOP0_ {
@@ -318,7 +341,6 @@ struct AzState_ {
     char*       rdramRegisters;
     char*       spDmem;
     char*       spImem;
-    uint32_t*   spRegisters;
     uint32_t*   miRegisters;
     uint32_t*   viRegisters;
     uint32_t*   aiRegisters;
