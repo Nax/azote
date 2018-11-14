@@ -166,29 +166,6 @@
 #define OP_CP1_CVT_W        0x24
 #define OP_CP1_CVT_L        0x25
 
-static void _handleInterrupts(AzState* state)
-{
-    uint64_t status = state->cop0.registers[12];
-    uint8_t pending;
-
-    if ((status & 0x01) == 0 || (status & 0x06) != 0)
-        return;
-    pending = (state->cop0.registers[13] >> 8) & 0xff;
-    pending &= ((status >> 8) & 0xff);
-    if (pending)
-    {
-        printf("INTERRUPT\n");
-        int bd = (state->cpu.pc2 != state->cpu.pc + 4);
-        state->verbose = 1;
-        state->cop0.registers[12] |= 0x02;
-        state->cop0.registers[14] = state->cpu.pc;
-        if (bd)
-            state->cop0.registers[14] -= 4;
-        state->cpu.pc = 0xffffffff80000180;
-        state->cpu.pc2 = state->cpu.pc + 4;
-    }
-}
-
 #define RS      ((op >> 21) & 0x1f)
 #define RT      ((op >> 16) & 0x1f)
 #define RD      ((op >> 11) & 0x1f)
@@ -212,8 +189,6 @@ static int64_t sra64(int64_t x, uint8_t shift)
     return (int64_t)(((uint64_t)x >> shift) | -(((uint64_t)x & ~(UINT64_MAX >> 1)) >> shift));
 }
 
-uint64_t pcBak;
-
 void _runCycles(AzState* state, uint32_t cycles)
 {
     uint32_t op;
@@ -235,7 +210,6 @@ void _runCycles(AzState* state, uint32_t cycles)
     for (uint32_t i = 0; i < cycles; ++i)
     {
         op = azMemoryRead32(state, pc);
-        pcBak = pc;
         pc = pc2;
         pc2 += 4;
 
@@ -1037,7 +1011,7 @@ uint64_t _getTimeNano()
 
 void azRun(AzState* state)
 {
-    static const uint32_t granularity = 256;
+    static const uint32_t granularity = 4096;
     static const uint64_t kPeriod = 16666666;
     uint64_t now;
     uint64_t referenceTime;

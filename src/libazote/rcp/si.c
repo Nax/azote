@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <libazote/libazote.h>
 
 static void _dmaReadPIF(AzState* state)
@@ -39,11 +40,9 @@ void azRcpWriteSI(AzState* state, uint32_t addr, uint32_t value)
         state->siRegisters[0] = value;
         return;
     case SI_PIF_ADDR_RD64B_REG:
-        state->siRegisters[1];
         _dmaReadPIF(state);
         return;
     case SI_PIF_ADDR_WR64B_REG:
-        state->siRegisters[2];
         _dmaWritePIF(state);
         return;
     case SI_STATUS_REG:

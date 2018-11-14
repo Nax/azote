@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <libazote/libazote.h>
 
 static void _dmaRead(AzState* state)

@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <libazote/libazote.h>
 
 uint32_t azReadPIF(AzState* state, uint32_t addr)
