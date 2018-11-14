@@ -1,28 +1,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
+#include <limits.h>
 #include <libazote/libazote.h>
-
-#define _       AZOTE_INST_NONE
-#define I       AZOTE_INST_I
-#define J       AZOTE_INST_J
-
-static uint8_t const kInstructionTableCommonType[64] = {
-    _, _, J, J, I, I, I, I,
-    I, I, I, I, I, I, I, I,
-    _, _, _, _, I, I, I, I,
-    I, I, I, I, _, _, _, _,
-    I, I, I, I, I, I, I, I,
-    I, I, I, I, I, I, I, I,
-    I, I, _, _, I, I, _, I,
-    I, I, _, _, I, I, _, I,
-};
-
-#undef _
-#undef I
-#undef J
-
-#define _(x)   (azOp ## x)
 
 #define OP_SPECIAL  0x00
 #define OP_REGIMM   0x01
@@ -78,282 +58,87 @@ static uint8_t const kInstructionTableCommonType[64] = {
 #define OP_SDC1     0x3d
 #define OP_SD       0x3f
 
+#define OP_SPECIAL_SLL      0x00
+#define OP_SPECIAL_SRL      0x02
+#define OP_SPECIAL_SRA      0x03
+#define OP_SPECIAL_SLLV     0x04
+#define OP_SPECIAL_SRLV     0x06
+#define OP_SPECIAL_SRAV     0x07
+#define OP_SPECIAL_JR       0x08
+#define OP_SPECIAL_JALR     0x09
+#define OP_SPECIAL_SYSCALL  0x0c
+#define OP_SPECIAL_BREAK    0x0d
+#define OP_SPECIAL_SYNC     0x0f
+#define OP_SPECIAL_MFHI     0x10
+#define OP_SPECIAL_MTHI     0x11
+#define OP_SPECIAL_MFLO     0x12
+#define OP_SPECIAL_MTLO     0x13
+#define OP_SPECIAL_DSLLV    0x14
+#define OP_SPECIAL_DSRLV    0x16
+#define OP_SPECIAL_DSRAV    0x17
+#define OP_SPECIAL_MULT     0x18
+#define OP_SPECIAL_MULTU    0x19
+#define OP_SPECIAL_DIV      0x1a
+#define OP_SPECIAL_DIVU     0x1b
+#define OP_SPECIAL_DMULT    0x1c
+#define OP_SPECIAL_DMULTU   0x1d
+#define OP_SPECIAL_DDIV     0x1e
+#define OP_SPECIAL_DDIVU    0x1f
+#define OP_SPECIAL_ADD      0x20
+#define OP_SPECIAL_ADDU     0x21
+#define OP_SPECIAL_SUB      0x22
+#define OP_SPECIAL_SUBU     0x23
+#define OP_SPECIAL_AND      0x24
+#define OP_SPECIAL_OR       0x25
+#define OP_SPECIAL_XOR      0x26
+#define OP_SPECIAL_NOR      0x27
+#define OP_SPECIAL_SLT      0x2a
+#define OP_SPECIAL_SLTU     0x2b
+#define OP_SPECIAL_DADD     0x2c
+#define OP_SPECIAL_DADDU    0x2d
+#define OP_SPECIAL_DSUB     0x2e
+#define OP_SPECIAL_DSUBU    0x2f
+#define OP_SPECIAL_TGE      0x30
+#define OP_SPECIAL_TGEU     0x31
+#define OP_SPECIAL_TLT      0x32
+#define OP_SPECIAL_TLTU     0x33
+#define OP_SPECIAL_TEQ      0x34
+#define OP_SPECIAL_TNE      0x36
+#define OP_SPECIAL_DSLL     0x38
+#define OP_SPECIAL_DSRL     0x3a
+#define OP_SPECIAL_DSRA     0x3b
+#define OP_SPECIAL_DSLL32   0x3c
+#define OP_SPECIAL_DSRL32   0x3e
+#define OP_SPECIAL_DSRA32   0x3f
 
-static void* kInstructionTableCommon[64] = {
-    NULL, NULL, _(J), _(JAL), _(BEQ), _(BNE), _(BLEZ), _(BGTZ),
-    _(ADDI), _(ADDIU), _(SLTI), _(SLTIU), _(ANDI), _(ORI), _(XORI), _(LUI),
-    NULL, NULL, NULL, NULL, _(BEQL), _(BNEL), _(BLEZL), _(BGTZL),
-    _(DADDI), _(DADDIU), _(LDL), _(LDR), NULL, NULL, NULL, NULL,
-    _(LB), _(LH), _(LWL), _(LW), _(LBU), _(LHU), _(LWR), _(LWU),
-    _(SB), _(SH), _(SWL), _(SW), _(SDL), _(SDR), _(SWR), _(CACHE),
-    _(LL), _(LWC1), NULL, NULL, _(LLD), _(LDC1), NULL, _(LD),
-    _(SC), _(SWC1), NULL, NULL, _(SCD), _(SDC1), NULL, _(SD),
-};
+#define OP_REGIMM_BLTZ      0x00
+#define OP_REGIMM_BGEZ      0x01
+#define OP_REGIMM_BLTZL     0x02
+#define OP_REGIMM_BGEZL     0x03
+#define OP_REGIMM_TGEI      0x08
+#define OP_REGIMM_TGEIU     0x09
+#define OP_REGIMM_TLTI      0x0a
+#define OP_REGIMM_TLTIU     0x0b
+#define OP_REGIMM_TEQI      0x0c
+#define OP_REGIMM_TNEI      0x0e
+#define OP_REGIMM_BLTZAL    0x10
+#define OP_REGIMM_BGEZAL    0x11
+#define OP_REGIMM_BLTZALL   0x12
+#define OP_REGIMM_BGEZALL   0x13
 
-static AzProcInstructionR* const kInstructionTableSpecial[64] = {
-    _(SLL), NULL, _(SRL), _(SRA), _(SLLV), NULL, _(SRLV), _(SRAV),
-    _(JR), _(JALR), NULL, NULL, NULL, NULL, NULL, NULL,
-    _(MFHI), _(MTHI), _(MFLO), _(MTLO), _(DSLLV), NULL, _(DSRLV), _(DSRAV),
-    _(MULT), _(MULTU), _(DIV), _(DIVU), _(DMULT), _(DMULTU), _(DDIV), _(DDIVU),
-    _(ADD), _(ADDU), _(SUB), _(SUBU), _(AND), _(OR), _(XOR), _(NOR),
-    NULL, NULL, _(SLT), _(SLTU), _(DADD), _(DADDU), _(DSUB), _(DSUBU),
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-    _(DSLL), NULL, _(DSRL), _(DSRA), _(DSLL32), NULL, _(DSRL32), _(DSRA32),
-};
+#define OP_COP_MF           0x00
+#define OP_COP_DMF          0x01
+#define OP_COP_CF           0x02
+#define OP_COP_MT           0x04
+#define OP_COP_DMT          0x05
+#define OP_COP_CT           0x06
+#define OP_COP_BC           0x08
 
-static AzProcInstructionRegImm* const kInstructionTableRegImm[32] = {
-    _(BLTZ), _(BGEZ), _(BLTZL), _(BGEZL), NULL, NULL, NULL, NULL,
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-    _(BLTZAL), _(BGEZAL), _(BLTZALL), _(BGEZALL), NULL, NULL, NULL, NULL,
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-};
-
-static AzProcInstructionCop* const kInstructionTableCOP0[16] = {
-    _(MFC0), NULL, NULL, NULL, _(MTC0), NULL, NULL, NULL,
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-};
-
-static AzProcInstructionCopCo* const kInstructionTableCOPCO0[64] = {
-    NULL, _(TLBR), _(TLBWI), NULL, NULL, NULL, _(TLBWR), NULL,
-    _(TLBP), NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-    _(ERET), NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-};
-
-static AzProcInstructionCop* const kInstructionTableCOP1[32] = {
-    _(MFC1), _(DMFC1), _(CFC1), NULL, _(MTC1), _(DMTC1), _(CTC1), NULL,
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-};
-
-static void* const kInstructionTableFp_S[64] = {
-    _(ADD_S), _(SUB_S), _(MUL_S), _(DIV_S), _(SQRT_S), _(ABS_S), _(MOV_S), _(NEG_S),
-    _(ROUND_L_S), _(TRUNC_L_S), _(CEIL_L_S), _(FLOOR_L_S), _(ROUND_W_S), _(TRUNC_W_S), _(CEIL_W_S), _(FLOOR_W_S),
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-    NULL, _(CVT_D_S), NULL, NULL, _(CVT_W_S), _(CVT_L_S), NULL, NULL,
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-};
-
-static void* const kInstructionTableFp_D[64] = {
-    _(ADD_D), _(SUB_D), _(MUL_D), _(DIV_D), _(SQRT_D), _(ABS_D), _(MOV_D), _(NEG_D),
-    _(ROUND_L_D), _(TRUNC_L_D), _(CEIL_L_D), _(FLOOR_L_D), _(ROUND_W_D), _(TRUNC_W_D), _(CEIL_W_D), _(FLOOR_W_D),
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-    _(CVT_S_D), NULL, NULL, NULL, _(CVT_W_D), _(CVT_L_D), NULL, NULL,
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-};
-
-static void* const kInstructionTableFp_W[64] = {
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-    _(CVT_S_W), _(CVT_D_W), NULL, NULL, NULL, NULL,
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-};
-
-static void* const kInstructionTableFp_L[64] = {
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-    _(CVT_S_L), _(CVT_D_L), NULL, NULL, NULL, NULL,
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-};
-
-#undef _
-
-static void _execInstructionCop0(AzState* state, uint32_t opcode)
-{
-    uint8_t selector = (opcode >> 21) & 0x1f;
-
-    if (!(selector & 0x10))
-    {
-        uint8_t rt = (opcode >> 16) & 0x1f;
-        uint8_t rd = (opcode >> 11) & 0x1f;
-
-        AzProcInstructionCop* instr = kInstructionTableCOP0[selector];
-        instr(state, rt, rd);
-    }
-    else
-    {
-        selector = opcode & 0x1f;
-
-        AzProcInstructionCopCo* instr = kInstructionTableCOPCO0[selector];
-        instr(state);
-    }
-}
-
-static void _execInstructionFp_S(AzState* state, uint32_t opcode)
-{
-    uint8_t selector = opcode & 0x3f;
-    uint8_t ft = (opcode >> 16) & 0x1f;
-    uint8_t fs = (opcode >> 11) & 0x1f;
-    uint8_t fd = (opcode >>  6) & 0x1f;
-
-    AzProcInstructionFpR* instr = (AzProcInstructionFpR*)kInstructionTableFp_S[selector];
-    instr(state, ft, fs, fd);
-}
-
-static void _execInstructionFp_D(AzState* state, uint32_t opcode)
-{
-    uint8_t selector = opcode & 0x3f;
-    uint8_t ft = (opcode >> 16) & 0x1f;
-    uint8_t fs = (opcode >> 11) & 0x1f;
-    uint8_t fd = (opcode >>  6) & 0x1f;
-
-    AzProcInstructionFpR* instr = (AzProcInstructionFpR*)kInstructionTableFp_D[selector];
-    instr(state, ft, fs, fd);
-}
-
-static void _execInstructionFp_W(AzState* state, uint32_t opcode)
-{
-    uint8_t selector = opcode & 0x3f;
-    uint8_t ft = (opcode >> 16) & 0x1f;
-    uint8_t fs = (opcode >> 11) & 0x1f;
-    uint8_t fd = (opcode >>  6) & 0x1f;
-
-    AzProcInstructionFpR* instr = (AzProcInstructionFpR*)kInstructionTableFp_W[selector];
-    instr(state, ft, fs, fd);
-}
-
-static void _execInstructionFp_L(AzState* state, uint32_t opcode)
-{
-    uint8_t selector = opcode & 0x3f;
-    uint8_t ft = (opcode >> 16) & 0x1f;
-    uint8_t fs = (opcode >> 11) & 0x1f;
-    uint8_t fd = (opcode >>  6) & 0x1f;
-
-    AzProcInstructionFpR* instr = (AzProcInstructionFpR*)kInstructionTableFp_L[selector];
-    instr(state, ft, fs, fd);
-}
-
-static void _execInstructionCop1(AzState* state, uint32_t opcode)
-{
-    uint8_t selector = (opcode >> 21) & 0x1f;
-
-    switch (selector)
-    {
-    case 0x10:
-        _execInstructionFp_S(state, opcode);
-        return;
-    case 0x11:
-        _execInstructionFp_D(state, opcode);
-        return;
-    case 0x14:
-        _execInstructionFp_W(state, opcode);
-        return;
-    case 0x15:
-        _execInstructionFp_L(state, opcode);
-        return;
-    default:
-        break;
-    }
-
-    uint8_t rt = (opcode >> 16) & 0x1f;
-    uint8_t rd = (opcode >> 11) & 0x1f;
-
-    AzProcInstructionCop* instr = kInstructionTableCOP1[selector];
-    instr(state, rt, rd);
-}
-
-static void _execInstructionRegImm(AzState* state, uint32_t opcode)
-{
-    uint8_t rs = (opcode >> 21) & 0x1f;
-    uint8_t selector = (opcode >> 16) & 0x1f;
-    uint16_t imm = opcode & 0xffff;
-
-    AzProcInstructionRegImm* instr = kInstructionTableRegImm[selector];
-    instr(state, rs, imm);
-}
-
-static void _execInstructionI(AzState* state, uint32_t opcode)
-{
-    uint8_t selector = (opcode >> 26);
-    uint8_t rs = (opcode >> 21) & 0x1f;
-    uint8_t rt = (opcode >> 16) & 0x1f;
-    uint16_t imm = opcode & 0xffff;
-
-    AzProcInstructionI* instr = (AzProcInstructionI*)kInstructionTableCommon[selector];
-    instr(state, rs, rt, imm);
-}
-
-static void _execInstructionJ(AzState* state, uint32_t opcode)
-{
-    uint8_t selector = (opcode >> 26);
-    uint32_t target = opcode & 0x3ffffff;
-
-    AzProcInstructionJ* instr = (AzProcInstructionJ*)kInstructionTableCommon[selector];
-    instr(state, target);
-}
-
-static void _execInstructionR(AzState* state, uint32_t opcode)
-{
-    uint8_t selector = (opcode & 0x3f);
-    uint8_t sa = (opcode >> 6) & 0x1f;
-    uint8_t rd = (opcode >> 11) & 0x1f;
-    uint8_t rt = (opcode >> 16) & 0x1f;
-    uint8_t rs = (opcode >> 21) & 0x1f;
-
-    AzProcInstructionR* instr = kInstructionTableSpecial[selector];
-    instr(state, rs, rt, rd, sa);
-}
-
-static void _execInstructionCommon(AzState* state, uint32_t opcode)
-{
-    uint8_t selector = (opcode >> 26);
-    uint8_t type = kInstructionTableCommonType[selector];
-
-    switch (type)
-    {
-    case AZOTE_INST_I:
-        _execInstructionI(state, opcode);
-        break;
-    case AZOTE_INST_J:
-        _execInstructionJ(state, opcode);
-        break;
-    default:
-        abort();
-    }
-}
-
-static void _execInstruction(AzState* state, uint32_t opcode)
-{
-    uint8_t op = (opcode >> 26);
-
-    switch (op)
-    {
-    case 0x00:
-        _execInstructionR(state, opcode);
-        return;
-    case 0x01:
-        _execInstructionRegImm(state, opcode);
-        break;
-    case 0x10:
-        _execInstructionCop0(state, opcode);
-        return;
-    case 0x11:
-        _execInstructionCop1(state, opcode);
-        return;
-    default:
-        _execInstructionCommon(state, opcode);
-        return;
-    }
-}
+#define OP_CP0_TLBR         0x01
+#define OP_CP0_TLBWI        0x02
+#define OP_CP0_TLBWR        0x06
+#define OP_CP0_TLBP         0x08
+#define OP_CP0_ERET         0x18
 
 static void _handleInterrupts(AzState* state)
 {
@@ -366,6 +151,7 @@ static void _handleInterrupts(AzState* state)
     pending &= ((status >> 8) & 0xff);
     if (pending)
     {
+        printf("INTERRUPT\n");
         int bd = (state->cpu.pc2 != state->cpu.pc + 4);
         state->verbose = 1;
         state->cop0.registers[12] |= 0x02;
@@ -379,32 +165,292 @@ static void _handleInterrupts(AzState* state)
 
 #define RS      ((op >> 21) & 0x1f)
 #define RT      ((op >> 16) & 0x1f)
-#define IMM     (op & 0xffff)
-#define SIMM    ((int16_t)(op & 0xffff))
+#define RD      ((op >> 11) & 0x1f)
+#define SA      ((op >>  6) & 0x1f)
+#define IMM     ((uint64_t)(op & 0xffff))
+#define SIMM    ((int64_t)((int16_t)(op & 0xffff)))
+
+static int32_t sra32(int32_t x, uint8_t shift)
+{
+    return (int32_t)(((uint32_t)x >> shift) | -(((uint32_t)x & ~(UINT32_MAX >> 1)) >> shift));
+}
+
+uint64_t pcBak;
 
 void _runCycles(AzState* state, uint32_t cycles)
 {
     uint32_t op;
     uint64_t pc;
     uint64_t pc2;
-    AzReg regs[32];
+    uint64_t tmp;
+    AzReg* regs = (AzReg*)(&state->cpu.registers[0]);
+    AzReg hi;
+    AzReg lo;
 
     pc = state->cpu.pc;
     pc2 = state->cpu.pc2;
-    memcpy(regs, state->cpu.registers, 32 * sizeof(AzReg));
+    //memcpy(regs, state->cpu.registers, 32 * sizeof(AzReg));
+    hi.u64 = state->cpu.hi;
+    lo.u64 = state->cpu.lo;
 
     for (uint32_t i = 0; i < cycles; ++i)
     {
         _handleInterrupts(state);
         op = azMemoryRead32(state, pc);
+        pcBak = pc;
         pc = pc2;
         pc2 += 4;
 
         switch (op >> 26)
         {
         case OP_SPECIAL:
+            switch (op & 0x3f)
+            {
+            case OP_SPECIAL_SLL:
+                if (RD) regs[RD].i64 = (int32_t)(regs[RT].i32 << SA);
+                break;
+            case OP_SPECIAL_SRL:
+                if (RD) regs[RD].i64 = (int32_t)(regs[RT].u32 >> SA);
+                break;
+            case OP_SPECIAL_SRA:
+                if (RD) regs[RD].i64 = sra32(regs[RT].i32, SA);
+                break;
+            case OP_SPECIAL_SLLV:
+                if (RD) regs[RD].i64 = (int32_t)(regs[RT].i32 << (regs[RS].u64 & 0x1f));
+                break;
+            case OP_SPECIAL_SRLV:
+                if (RD) regs[RD].i64 = (int32_t)(regs[RT].u32 >> (regs[RS].u64 & 0x1f));
+                break;
+            case OP_SPECIAL_SRAV:
+                if (RD) regs[RD].i64 = sra32(regs[RT].i32, regs[RS].u64 & 0x1f);
+                break;
+            case OP_SPECIAL_JR:
+                pc2 = regs[RS].u64;
+                break;
+            case OP_SPECIAL_JALR:
+                if (RD) regs[RD].u64 = pc2;
+                pc2 = regs[RS].u64;
+                break;
+            case OP_SPECIAL_SYSCALL:
+                break;
+            case OP_SPECIAL_BREAK:
+                break;
+            case OP_SPECIAL_SYNC:
+                break;
+            case OP_SPECIAL_MFHI:
+                if (RD) regs[RD].u64 = hi.u64;
+                break;
+            case OP_SPECIAL_MTHI:
+                hi.u64 = regs[RD].u64;
+                break;
+            case OP_SPECIAL_MFLO:
+                if (RD) regs[RD].u64 = lo.u64;
+                break;
+            case OP_SPECIAL_MTLO:
+                lo.u64 = regs[RD].u64;
+                break;
+            case OP_SPECIAL_DSLLV:
+                break;
+            case OP_SPECIAL_DSRLV:
+                break;
+            case OP_SPECIAL_DSRAV:
+                break;
+            case OP_SPECIAL_MULT:
+                tmp = (int64_t)regs[RS].i32 * (int64_t)regs[RT].i32;
+                hi.i64 = (int32_t)(tmp >> 32);
+                lo.i64 = (int32_t)(tmp & 0xffffffff);
+                break;
+            case OP_SPECIAL_MULTU:
+                tmp = (uint64_t)regs[RS].u32 * (uint64_t)regs[RT].u32;
+                hi.i64 = (int32_t)(tmp >> 32);
+                lo.i64 = (int32_t)(tmp & 0xffffffff);
+                break;
+            case OP_SPECIAL_DIV:
+                lo.i64 = (int32_t)(regs[RS].i32 / regs[RT].i32);
+                hi.i64 = (int32_t)(regs[RS].i32 % regs[RT].i32);
+                break;
+            case OP_SPECIAL_DIVU:
+                lo.i64 = (int32_t)(regs[RS].u32 / regs[RT].u32);
+                hi.i64 = (int32_t)(regs[RS].u32 % regs[RT].u32);
+                break;
+            case OP_SPECIAL_DMULT:
+                break;
+            case OP_SPECIAL_DMULTU:
+                break;
+            case OP_SPECIAL_DDIV:
+                break;
+            case OP_SPECIAL_DDIVU:
+                break;
+            case OP_SPECIAL_ADD:
+                if (RD) regs[RD].i64 = (int32_t)(regs[RS].u32 + regs[RT].u32);
+                break;
+            case OP_SPECIAL_ADDU:
+                if (RD) regs[RD].i64 = (int32_t)(regs[RS].u32 + regs[RT].u32);
+                break;
+            case OP_SPECIAL_SUB:
+                if (RD) regs[RD].i64 = (int32_t)(regs[RS].u32 - regs[RT].u32);
+                break;
+            case OP_SPECIAL_SUBU:
+                if (RD) regs[RD].i64 = (int32_t)(regs[RS].u32 - regs[RT].u32);
+                break;
+            case OP_SPECIAL_AND:
+                if (RD) regs[RD].u64 = regs[RS].u64 & regs[RT].u64;
+                break;
+            case OP_SPECIAL_OR:
+                if (RD) regs[RD].u64 = regs[RS].u64 | regs[RT].u64;
+                break;
+            case OP_SPECIAL_XOR:
+                if (RD) regs[RD].u64 = regs[RS].u64 ^ regs[RT].u64;
+                break;
+            case OP_SPECIAL_NOR:
+                if (RD) regs[RD].u64 = ~(regs[RS].u64 | regs[RT].u64);
+                break;
+            case OP_SPECIAL_SLT:
+                if (RD)
+                {
+                    if (regs[RS].i64 < regs[RT].i64)
+                        regs[RD].u64 = 1;
+                    else
+                        regs[RD].u64 = 0;
+                }
+                break;
+            case OP_SPECIAL_SLTU:
+                if (RD)
+                {
+                    if (regs[RS].u64 < regs[RT].u64)
+                        regs[RD].u64 = 1;
+                    else
+                        regs[RD].u64 = 0;
+                }
+                break;
+            case OP_SPECIAL_DADD:
+                break;
+            case OP_SPECIAL_DADDU:
+                break;
+            case OP_SPECIAL_DSUB:
+                break;
+            case OP_SPECIAL_DSUBU:
+                break;
+            case OP_SPECIAL_TGE:
+                break;
+            case OP_SPECIAL_TGEU:
+                break;
+            case OP_SPECIAL_TLT:
+                break;
+            case OP_SPECIAL_TLTU:
+                break;
+            case OP_SPECIAL_TEQ:
+                break;
+            case OP_SPECIAL_TNE:
+                break;
+            case OP_SPECIAL_DSLL:
+                break;
+            case OP_SPECIAL_DSRL:
+                break;
+            case OP_SPECIAL_DSRA:
+                break;
+            case OP_SPECIAL_DSLL32:
+                break;
+            case OP_SPECIAL_DSRL32:
+                break;
+            case OP_SPECIAL_DSRA32:
+                break;
+            }
             break;
         case OP_REGIMM:
+            switch (RT)
+            {
+            case OP_REGIMM_BLTZ:
+                if (regs[RS].i64 < 0) pc2 = pc + (SIMM << 2);
+                break;
+            case OP_REGIMM_BGEZ:
+                if (regs[RS].i64 >= 0) pc2 = pc + (SIMM << 2);
+                break;
+            case OP_REGIMM_BLTZL:
+                if (regs[RS].i64 < 0)
+                {
+                    pc2 = pc + (SIMM << 2);
+                }
+                else
+                {
+                    pc += 4;
+                    pc2 = pc + 4;
+                }
+                break;
+            case OP_REGIMM_BGEZL:
+                if (regs[RS].i64 >= 0)
+                {
+                    pc2 = pc + (SIMM << 2);
+                }
+                else
+                {
+                    pc += 4;
+                    pc2 = pc + 4;
+                }
+                break;
+            case OP_REGIMM_TGEI:
+                break;
+            case OP_REGIMM_TGEIU:
+                break;
+            case OP_REGIMM_TLTI:
+                break;
+            case OP_REGIMM_TLTIU:
+                break;
+            case OP_REGIMM_TEQI:
+                break;
+            case OP_REGIMM_TNEI:
+                break;
+            case OP_REGIMM_BLTZAL:
+                /* Debug */
+                azDebugDumpState(state);
+                getchar();
+                regs[31].u64 = pc + 4;
+                if (regs[RS].i64 < 0)
+                {
+                    pc2 = pc + (SIMM << 2);
+                }
+                break;
+            case OP_REGIMM_BGEZAL:
+                /* Debug */
+                azDebugDumpState(state);
+                getchar();
+                regs[31].u64 = pc + 4;
+                if (regs[RS].i64 >= 0)
+                {
+                    pc2 = pc + (SIMM << 2);
+                }
+                break;
+            case OP_REGIMM_BLTZALL:
+                /* Debug */
+                azDebugDumpState(state);
+                getchar();
+                regs[31].u64 = pc + 4;
+                if (regs[RS].i64 < 0)
+                {
+                    pc2 = pc + (SIMM << 2);
+                }
+                else
+                {
+                    pc += 4;
+                    pc2 = pc + 4;
+                }
+                break;
+            case OP_REGIMM_BGEZALL:
+                /* Debug */
+                azDebugDumpState(state);
+                getchar();
+                regs[31].u64 = pc + 4;
+                if (regs[RS].i64 >= 0)
+                {
+                    pc2 = pc + (SIMM << 2);
+                }
+                else
+                {
+                    pc += 4;
+                    pc2 = pc + 4;
+                }
+                break;
+            }
             break;
         case OP_J:
             pc2 = (pc & 0xfffffffff0000000) | ((op & 0x3ffffff) << 2);
@@ -422,20 +468,16 @@ void _runCycles(AzState* state, uint32_t cycles)
                 pc2 = pc + (SIMM << 2);
             break;
         case OP_BLEZ:
-            if (regs[RS].u64 <= 0)
-                pc2 = pc + (SIMM << 2);
+            if (regs[RS].i64 <= 0) pc2 = pc + (SIMM << 2);
             break;
         case OP_BGTZ:
-            if (regs[RS].u64 > 0)
-                pc2 = pc + (SIMM << 2);
+            if (regs[RS].i64 > 0) pc2 = pc + (SIMM << 2);
             break;
         case OP_ADDI:
-            if (RT)
-                regs[RT].i64 = regs[RS].i32 + SIMM;
+            if (RT) regs[RT].i64 = (int32_t)(regs[RS].u32 + SIMM);
             break;
         case OP_ADDIU:
-            if (RT)
-                regs[RT].i64 = regs[RS].i32 + SIMM;
+            if (RT) regs[RT].i64 = (int32_t)(regs[RS].u32 + SIMM);
             break;
         case OP_SLTI:
             if (RT)
@@ -469,9 +511,68 @@ void _runCycles(AzState* state, uint32_t cycles)
             break;
         case OP_LUI:
             if (RT)
-                regs[RT].i64 = (SIMM << 16);
+                regs[RT].i64 = (int32_t)(IMM << 16);
             break;
         case OP_COP0:
+            switch (RS)
+            {
+            case OP_COP_MF:
+                if (RT) regs[RT].i64 = (int32_t)state->cop0.registers[RD];
+                break;
+            case OP_COP_DMF:
+                if (RT) regs[RT].u64 = state->cop0.registers[RD];
+                break;
+            case OP_COP_MT:
+                state->cop0.registers[RD] = regs[RT].u64;
+                break;
+            case OP_COP_DMT:
+                state->cop0.registers[RD] = regs[RT].u64;
+                break;
+            case OP_COP_BC:
+                break;
+            case 0x10:
+            case 0x11:
+            case 0x12:
+            case 0x13:
+            case 0x14:
+            case 0x15:
+            case 0x16:
+            case 0x17:
+            case 0x18:
+            case 0x19:
+            case 0x1a:
+            case 0x1b:
+            case 0x1c:
+            case 0x1d:
+            case 0x1e:
+            case 0x1f:
+                switch (op & 0x3f)
+                {
+                case OP_CP0_TLBR:
+                    break;
+                case OP_CP0_TLBWI:
+                    break;
+                case OP_CP0_TLBWR:
+                    break;
+                case OP_CP0_TLBP:
+                    break;
+                case OP_CP0_ERET:
+                    printf("ERET\n");
+                    if (state->cop0.registers[COP0_REG_STATUS] & 0x04)
+                    {
+                        pc = state->cop0.registers[COP0_REG_ERROR_EPC];
+                        state->cop0.registers[COP0_REG_STATUS] &= ~(0x04);
+                    }
+                    else
+                    {
+                        pc = state->cop0.registers[COP0_REG_EPC];
+                        state->cop0.registers[COP0_REG_STATUS] &= ~(0x02);
+                    }
+                    pc2 = pc + 4;
+                    break;
+                }
+                break;
+            }
             break;
         case OP_COP1:
             break;
@@ -484,8 +585,8 @@ void _runCycles(AzState* state, uint32_t cycles)
             }
             else
             {
-                pc2 += 4;
                 pc += 4;
+                pc2 = pc + 4;
             }
             break;
         case OP_BNEL:
@@ -495,30 +596,30 @@ void _runCycles(AzState* state, uint32_t cycles)
             }
             else
             {
-                pc2 += 4;
                 pc += 4;
+                pc2 = pc + 4;
             }
             break;
         case OP_BLEZL:
-            if (regs[RS].u64 <= 0)
+            if (regs[RS].i64 <= 0)
             {
                 pc2 = pc + (SIMM << 2);
             }
             else
             {
-                pc2 += 4;
                 pc += 4;
+                pc2 = pc + 4;
             }
             break;
         case OP_BGTZL:
-            if (regs[RS].u64 > 0)
+            if (regs[RS].i64 > 0)
             {
                 pc2 = pc + (SIMM << 2);
             }
             else
             {
-                pc2 += 4;
                 pc += 4;
+                pc2 = pc + 4;
             }
             break;
         case OP_DADDI:
@@ -606,6 +707,8 @@ void _runCycles(AzState* state, uint32_t cycles)
     state->cpu.pc = pc;
     state->cpu.pc2 = pc2;
     memcpy(state->cpu.registers, regs, 32 * sizeof(AzReg));
+    state->cpu.hi = hi.u64;
+    state->cpu.lo = lo.u64;
 }
 
 uint64_t _getTimeNano()
