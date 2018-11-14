@@ -158,7 +158,7 @@ static void _runCycles(AzState* state, uint32_t cycles)
         case OP_SLTIU:
             if (RT)
             {
-                if ((int32_t)regs[RS] < (int32_t)SIMM)
+                if ((int32_t)regs[RS] < SIMM)
                     regs[RT] = 1;
                 else
                     regs[RT] = 0;
@@ -212,10 +212,10 @@ static void _runCycles(AzState* state, uint32_t cycles)
             *(uint8_t*)(state->spDmem + ((regs[RS] + SIMM) & 0xfff)) = regs[RT];
             break;
         case OP_SH:
-            *(uint16_t*)(state->spDmem + ((regs[RS] + SIMM) & 0xfff)) = regs[RT];
+            *(uint16_t*)(state->spDmem + ((regs[RS] + SIMM) & 0xfff)) = bswap16(regs[RT]);
             break;
         case OP_SW:
-            *(uint32_t*)(state->spDmem + ((regs[RS] + SIMM) & 0xfff)) = regs[RT];
+            *(uint32_t*)(state->spDmem + ((regs[RS] + SIMM) & 0xfff)) = bswap32(regs[RT]);
             break;
         case OP_CACHE:
             TRAP;
