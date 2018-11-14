@@ -13,7 +13,6 @@ static void _dmaReadDRAM(AzState* state)
     spAddr = state->spRegisters[0] & 0x1fff;
     ramAddr = state->spRegisters[1] & 0xffffff;
     printf("0x%08x <- 0x%08x (%llu bytes)\n", spAddr, ramAddr, size);
-    getchar();
     if (spAddr & 0x1000)
         memcpy(state->spImem + (spAddr & 0xfff), state->rdram + ramAddr, size);
     else
@@ -52,7 +51,7 @@ uint32_t azRcpReadSP(AzState* state, uint32_t addr)
     case SP_STATUS_REG:
         return state->spRegisters[4];
     case SP_PC_REG:
-        return state->rsp.pc;
+        return state->rsp.pc & 0xfff;
     default:
         return 0;
     }
@@ -104,13 +103,15 @@ void azRcpWriteSP(AzState* state, uint32_t addr, uint32_t value)
         if (value & 0x00800000) state->spRegisters[4] &= ~(0x4000);             // clear signal 7
         else if (value & 0x01000000) state->spRegisters[4] |= 0x4000;           // set signal 7
         printf("RSP: %s\n", (state->spRegisters[4] & 0x01) ? "HALT" : "RUN");
-        getchar();
         if (!(state->spRegisters[4] & 0x01))
+        {
+            getchar();
             azRunRSP(state);
+        }
         return;
     case SP_PC_REG:
-        state->rsp.pc = value;
-        state->rsp.pc2 = value + 4;
+        state->rsp.pc = value & 0xfff;
+        state->rsp.pc2 = state->rsp.pc + 4;
         return;
     default:
         return;

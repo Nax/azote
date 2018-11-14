@@ -20,7 +20,7 @@ static void _runCycles(AzState* state, uint32_t cycles)
 
     for (uint32_t i = 0; i < cycles; ++i)
     {
-        op = *(uint32_t*)(state->spImem + (pc & 0xfff));
+        op = bswap32(*(uint32_t*)(state->spImem + (pc & 0xfff)));
         pc = pc2;
         pc2 += 4;
 
@@ -36,57 +36,71 @@ static void _runCycles(AzState* state, uint32_t cycles)
                 TRAP;
                 break;
             case OP_SPECIAL_SLL:
-                TRAP;
+                if (RD) regs[RD] = regs[RT] << SA;
                 break;
             case OP_SPECIAL_SRL:
-                TRAP;
+                if (RD) regs[RD] = regs[RT] >> SA;
                 break;
             case OP_SPECIAL_SRA:
-                TRAP;
+                if (RD) regs[RD] = sra32(regs[RT], SA);
                 break;
             case OP_SPECIAL_SLLV:
-                TRAP;
+                if (RD) regs[RD] = regs[RT] << (regs[RS] & 0x1f);
                 break;
             case OP_SPECIAL_SRLV:
-                TRAP;
+                if (RD) regs[RD] = regs[RT] >> (regs[RS] & 0x1f);
                 break;
             case OP_SPECIAL_SRAV:
-                TRAP;
+                if (RD) regs[RD] = sra32(regs[RT], regs[RS] & 0x1f);
                 break;
             case OP_SPECIAL_JR:
-                TRAP;
+                pc2 = regs[RS];
                 break;
             case OP_SPECIAL_JALR:
-                TRAP;
+                pc2 = regs[RS];
+                regs[31] = pc + 4;
                 break;
             case OP_SPECIAL_BREAK:
+                printf("RSP BREAK\n");
                 TRAP;
                 break;
             case OP_SPECIAL_ADD:
             case OP_SPECIAL_ADDU:
-                TRAP;
+                if (RD) regs[RD] = regs[RS] + regs[RT];
                 break;
             case OP_SPECIAL_SUB:
             case OP_SPECIAL_SUBU:
-                TRAP;
+                if (RD) regs[RD] = regs[RS] - regs[RT];
                 break;
             case OP_SPECIAL_AND:
-                TRAP;
+                if (RD) regs[RD] = regs[RS] & regs[RT];
                 break;
             case OP_SPECIAL_OR:
-                TRAP;
+                if (RD) regs[RD] = regs[RS] | regs[RT];
                 break;
             case OP_SPECIAL_XOR:
-                TRAP;
+                if (RD) regs[RD] = regs[RS] ^ regs[RT];
                 break;
             case OP_SPECIAL_NOR:
-                TRAP;
+                if (RD) regs[RD] = ~(regs[RS] | regs[RT]);
                 break;
             case OP_SPECIAL_SLT:
-                TRAP;
+                if (RD)
+                {
+                    if ((int32_t)regs[RS] < (int32_t)regs[RT])
+                        regs[RD] = 1;
+                    else
+                        regs[RD] = 0;
+                }
                 break;
             case OP_SPECIAL_SLTU:
-                TRAP;
+                if (RD)
+                {
+                    if (regs[RS] < regs[RT])
+                        regs[RD] = 1;
+                    else
+                        regs[RD] = 0;
+                }
                 break;
             }
             break;
@@ -94,56 +108,73 @@ static void _runCycles(AzState* state, uint32_t cycles)
             switch (RT)
             {
             case OP_REGIMM_BLTZ:
-                TRAP;
+                if ((int32_t)regs[RS] < 0)
+                    pc2 = pc + (SIMM << 2);
                 break;
             case OP_REGIMM_BGEZ:
-                TRAP;
+                if ((int32_t)regs[RS] >= 0)
+                    pc2 = pc + (SIMM << 2);
                 break;
             case OP_REGIMM_BLTZAL:
-                TRAP;
+                regs[31] = pc + 4;
+                if ((int32_t)regs[RS] < 0)
+                    pc2 = pc + (SIMM << 2);
                 break;
             case OP_REGIMM_BGEZAL:
-                TRAP;
+                regs[31] = pc + 4;
+                if ((int32_t)regs[RS] >= 0)
+                    pc2 = pc + (SIMM << 2);
                 break;
             }
             break;
         case OP_J:
-            TRAP;
+            pc2 = ((op << 2) & 0xfff);
             break;
         case OP_JAL:
-            TRAP;
+            regs[31] = pc + 4;
+            pc2 = ((op << 2) & 0xfff);
             break;
         case OP_BEQ:
-            TRAP;
+            if (regs[RS] == regs[RT])
+                pc2 = pc + (SIMM << 2);
             break;
         case OP_BNE:
-            TRAP;
+            if (regs[RS] != regs[RT])
+                pc2 = pc + (SIMM << 2);
             break;
         case OP_BLEZ:
-            TRAP;
+            if ((int32_t)regs[RS] <= 0)
+                pc2 = pc + (SIMM << 2);
             break;
         case OP_BGTZ:
-            TRAP;
+            if ((int32_t)regs[RS] > 0)
+                pc2 = pc + (SIMM << 2);
             break;
         case OP_ADDI:
         case OP_ADDIU:
-            TRAP;
+            if (RT) regs[RT] = regs[RS] + SIMM;
             break;
         case OP_SLTI:
         case OP_SLTIU:
-            TRAP;
+            if (RT)
+            {
+                if ((int32_t)regs[RS] < (int32_t)SIMM)
+                    regs[RT] = 1;
+                else
+                    regs[RT] = 0;
+            }
             break;
         case OP_ANDI:
-            TRAP;
+            if (RT) regs[RT] = regs[RS] & IMM;
             break;
         case OP_ORI:
-            TRAP;
+            if (RT) regs[RT] = regs[RS] | IMM;
             break;
         case OP_XORI:
-            TRAP;
+            if (RT) regs[RT] = regs[RS] ^ IMM;
             break;
         case OP_LUI:
-            TRAP;
+            if (RT) regs[RT] = ((uint32_t)IMM << 16);
             break;
         case OP_COP0:
             TRAP;
@@ -152,28 +183,28 @@ static void _runCycles(AzState* state, uint32_t cycles)
             TRAP;
             break;
         case OP_LB:
-            TRAP;
+            if (RT) regs[RT] = (int32_t)(*(int8_t*)(state->spDmem + ((regs[RS] + SIMM) & 0xfff)));
             break;
         case OP_LH:
-            TRAP;
+            if (RT) regs[RT] = (int32_t)((int16_t)bswap16(*(uint16_t*)(state->spDmem + ((regs[RS] + SIMM) & 0xfff))));
             break;
         case OP_LW:
-            TRAP;
+            if (RT) regs[RT] = bswap32(*(uint32_t*)(state->spDmem + ((regs[RS] + SIMM) & 0xfff)));
             break;
         case OP_LBU:
-            TRAP;
+            if (RT) regs[RT] = *(uint8_t*)(state->spDmem + ((regs[RS] + SIMM) & 0xfff));
             break;
         case OP_LHU:
-            TRAP;
+            if (RT) regs[RT] = bswap16(*(uint16_t*)(state->spDmem + ((regs[RS] + SIMM) & 0xfff)));
             break;
         case OP_SB:
-            TRAP;
+            *(uint8_t*)(state->spDmem + ((regs[RS] + SIMM) & 0xfff)) = regs[RT];
             break;
         case OP_SH:
-            TRAP;
+            *(uint16_t*)(state->spDmem + ((regs[RS] + SIMM) & 0xfff)) = regs[RT];
             break;
         case OP_SW:
-            TRAP;
+            *(uint32_t*)(state->spDmem + ((regs[RS] + SIMM) & 0xfff)) = regs[RT];
             break;
         case OP_CACHE:
             TRAP;
