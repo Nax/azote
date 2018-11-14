@@ -140,6 +140,32 @@
 #define OP_CP0_TLBP         0x08
 #define OP_CP0_ERET         0x18
 
+#define OP_COP1_S           0x10
+#define OP_COP1_D           0x11
+#define OP_COP1_W           0x14
+#define OP_COP1_L           0x15
+
+#define OP_CP1_ADD          0x00
+#define OP_CP1_SUB          0x01
+#define OP_CP1_MUL          0x02
+#define OP_CP1_DIV          0x03
+#define OP_CP1_SQRT         0x04
+#define OP_CP1_ABS          0x05
+#define OP_CP1_MOV          0x06
+#define OP_CP1_NEG          0x07
+#define OP_CP1_ROUND_L      0x08
+#define OP_CP1_TRUNC_L      0x09
+#define OP_CP1_CEIL_L       0x0a
+#define OP_CP1_FLOOR_L      0x0b
+#define OP_CP1_ROUND_W      0x0c
+#define OP_CP1_TRUNC_W      0x0d
+#define OP_CP1_CEIL_W       0x0e
+#define OP_CP1_FLOOR_W      0x0f
+#define OP_CP1_CVT_S        0x20
+#define OP_CP1_CVT_D        0x21
+#define OP_CP1_CVT_W        0x24
+#define OP_CP1_CVT_L        0x25
+
 static void _handleInterrupts(AzState* state)
 {
     uint64_t status = state->cop0.registers[12];
@@ -167,6 +193,11 @@ static void _handleInterrupts(AzState* state)
 #define RT      ((op >> 16) & 0x1f)
 #define RD      ((op >> 11) & 0x1f)
 #define SA      ((op >>  6) & 0x1f)
+
+#define FT      RT
+#define FS      RD
+#define FD      SA
+
 #define IMM     ((uint64_t)(op & 0xffff))
 #define SIMM    ((int64_t)((int16_t)(op & 0xffff)))
 #define TRAP    do { printf("TRAP at %016llx\n", pc); getchar(); } while (0)
@@ -637,10 +668,10 @@ void _runCycles(AzState* state, uint32_t cycles)
                 TRAP;
                 break;
             case OP_COP_MF:
-                TRAP;
+                if (RT) regs[RT].i64 = state->cop1.registers[RD].i32;
                 break;
             case OP_COP_DMF:
-                TRAP;
+                if (RT) regs[RT].u64 = state->cop1.registers[RD].u64;
                 break;
             case OP_COP_CF:
                 if (RT)
@@ -652,10 +683,10 @@ void _runCycles(AzState* state, uint32_t cycles)
                 }
                 break;
             case OP_COP_MT:
-                TRAP;
+                state->cop1.registers[RD].u32 = regs[RT].u32;
                 break;
             case OP_COP_DMT:
-                TRAP;
+                state->cop1.registers[RD].u64 = regs[RT].u64;
                 break;
             case OP_COP_CT:
                 if (RD == 0)
@@ -665,6 +696,164 @@ void _runCycles(AzState* state, uint32_t cycles)
                 break;
             case OP_COP_BC:
                 TRAP;
+                break;
+            case OP_COP1_S:
+                switch (op & 0x3f)
+                {
+                default:
+                    TRAP;
+                    break;
+                case OP_CP1_ADD:
+                    state->cop1.registers[FD].f = state->cop1.registers[FS].f + state->cop1.registers[FT].f;
+                    break;
+                case OP_CP1_SUB:
+                    state->cop1.registers[FD].f = state->cop1.registers[FS].f - state->cop1.registers[FT].f;
+                    break;
+                case OP_CP1_MUL:
+                    state->cop1.registers[FD].f = state->cop1.registers[FS].f * state->cop1.registers[FT].f;
+                    break;
+                case OP_CP1_DIV:
+                    state->cop1.registers[FD].f = state->cop1.registers[FS].f / state->cop1.registers[FT].f;
+                    break;
+                case OP_CP1_SQRT:
+                    state->cop1.registers[FD].f = sqrtf(state->cop1.registers[FS].f);
+                    break;
+                case OP_CP1_ABS:
+                    state->cop1.registers[FD].f = fabsf(state->cop1.registers[FS].f);
+                    break;
+                case OP_CP1_MOV:
+                    state->cop1.registers[FD].f = state->cop1.registers[FS].f;
+                    break;
+                case OP_CP1_NEG:
+                    state->cop1.registers[FD].f = -(state->cop1.registers[FS].f);
+                    break;
+                case OP_CP1_ROUND_L:
+                    state->cop1.registers[FD].u64 = fpS2L(roundf(state->cop1.registers[FS].f));
+                    break;
+                case OP_CP1_TRUNC_L:
+                    state->cop1.registers[FD].u64 = fpS2L(truncf(state->cop1.registers[FS].f));
+                    break;
+                case OP_CP1_CEIL_L:
+                    state->cop1.registers[FD].u64 = fpS2L(ceilf(state->cop1.registers[FS].f));
+                    break;
+                case OP_CP1_FLOOR_L:
+                    state->cop1.registers[FD].u64 = fpS2L(floorf(state->cop1.registers[FS].f));
+                    break;
+                case OP_CP1_ROUND_W:
+                    state->cop1.registers[FD].u32 = fpS2W(roundf(state->cop1.registers[FS].f));
+                    break;
+                case OP_CP1_TRUNC_W:
+                    state->cop1.registers[FD].u32 = fpS2W(truncf(state->cop1.registers[FS].f));
+                    break;
+                case OP_CP1_CEIL_W:
+                    state->cop1.registers[FD].u32 = fpS2W(ceilf(state->cop1.registers[FS].f));
+                    break;
+                case OP_CP1_FLOOR_W:
+                    state->cop1.registers[FD].u32 = fpS2W(floorf(state->cop1.registers[FS].f));
+                    break;
+                case OP_CP1_CVT_D:
+                    state->cop1.registers[FD].d = (double)state->cop1.registers[FS].f;
+                    break;
+                case OP_CP1_CVT_W:
+                    state->cop1.registers[FD].u32 = fpS2W(state->cop1.registers[FS].f);
+                    break;
+                case OP_CP1_CVT_L:
+                    state->cop1.registers[FD].u64 = fpS2L(state->cop1.registers[FS].f);
+                    break;
+                }
+                break;
+            case OP_COP1_D:
+                switch (op & 0x3f)
+                {
+                default:
+                    TRAP;
+                    break;
+                case OP_CP1_ADD:
+                    state->cop1.registers[FD].d = state->cop1.registers[FS].d + state->cop1.registers[FT].d;
+                    break;
+                case OP_CP1_SUB:
+                    state->cop1.registers[FD].d = state->cop1.registers[FS].d - state->cop1.registers[FT].d;
+                    break;
+                case OP_CP1_MUL:
+                    state->cop1.registers[FD].d = state->cop1.registers[FS].d * state->cop1.registers[FT].d;
+                    break;
+                case OP_CP1_DIV:
+                    state->cop1.registers[FD].d = state->cop1.registers[FS].d / state->cop1.registers[FT].d;
+                    break;
+                case OP_CP1_SQRT:
+                    state->cop1.registers[FD].d = sqrt(state->cop1.registers[FS].d);
+                    break;
+                case OP_CP1_ABS:
+                    state->cop1.registers[FD].d = fabs(state->cop1.registers[FS].d);
+                    break;
+                case OP_CP1_MOV:
+                    state->cop1.registers[FD].d = state->cop1.registers[FS].d;
+                    break;
+                case OP_CP1_NEG:
+                    state->cop1.registers[FD].d = -(state->cop1.registers[FS].d);
+                    break;
+                case OP_CP1_ROUND_L:
+                    state->cop1.registers[FD].u64 = fpD2L(round(state->cop1.registers[FS].d));
+                    break;
+                case OP_CP1_TRUNC_L:
+                    state->cop1.registers[FD].u64 = fpD2L(trunc(state->cop1.registers[FS].d));
+                    break;
+                case OP_CP1_CEIL_L:
+                    state->cop1.registers[FD].u64 = fpD2L(ceil(state->cop1.registers[FS].d));
+                    break;
+                case OP_CP1_FLOOR_L:
+                    state->cop1.registers[FD].u64 = fpD2L(floor(state->cop1.registers[FS].d));
+                    break;
+                case OP_CP1_ROUND_W:
+                    state->cop1.registers[FD].u32 = fpD2W(round(state->cop1.registers[FS].d));
+                    break;
+                case OP_CP1_TRUNC_W:
+                    state->cop1.registers[FD].u32 = fpD2W(trunc(state->cop1.registers[FS].d));
+                    break;
+                case OP_CP1_CEIL_W:
+                    state->cop1.registers[FD].u32 = fpD2W(ceil(state->cop1.registers[FS].d));
+                    break;
+                case OP_CP1_FLOOR_W:
+                    state->cop1.registers[FD].u32 = fpD2W(floor(state->cop1.registers[FS].d));
+                    break;
+                case OP_CP1_CVT_S:
+                    state->cop1.registers[FD].f = (float)state->cop1.registers[FS].d;
+                    break;
+                case OP_CP1_CVT_W:
+                    state->cop1.registers[FD].u32 = fpD2W(state->cop1.registers[FS].d);
+                    break;
+                case OP_CP1_CVT_L:
+                    state->cop1.registers[FD].u64 = fpD2L(state->cop1.registers[FS].d);
+                    break;
+                }
+                break;
+            case OP_COP1_W:
+                switch (op & 0x3f)
+                {
+                default:
+                    TRAP;
+                    break;
+                case OP_CP1_CVT_S:
+                    state->cop1.registers[FD].f = fpW2S(state->cop1.registers[FS].u32);
+                    break;
+                case OP_CP1_CVT_D:
+                    state->cop1.registers[FD].d = fpW2D(state->cop1.registers[FS].u32);
+                    break;
+                }
+                break;
+            case OP_COP1_L:
+                switch (op & 0x3f)
+                {
+                default:
+                    TRAP;
+                    break;
+                case OP_CP1_CVT_S:
+                    state->cop1.registers[FD].f = fpL2S(state->cop1.registers[FS].u64);
+                    break;
+                case OP_CP1_CVT_D:
+                    state->cop1.registers[FD].d = fpL2D(state->cop1.registers[FS].u64);
+                    break;
+                }
                 break;
             }
             break;
