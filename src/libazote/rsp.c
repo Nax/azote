@@ -220,6 +220,91 @@ static void _runCycles(AzState* state, uint32_t cycles)
         case OP_CACHE:
             TRAP;
             break;
+        case OP_LWC2:
+            switch (RD)
+            {
+            default:
+                TRAP;
+                break;
+            case OP_LWC2_LBV:
+                TRAP;
+                break;
+            case OP_LWC2_LSV:
+                TRAP;
+                break;
+            case OP_LWC2_LLV:
+                TRAP;
+                break;
+            case OP_LWC2_LDV:
+                TRAP;
+                break;
+            case OP_LWC2_LQV:
+                TRAP;
+                break;
+            case OP_LWC2_LRV:
+                TRAP;
+                break;
+            case OP_LWC2_LPV:
+                TRAP;
+                break;
+            case OP_LWC2_LUV:
+                TRAP;
+                break;
+            case OP_LWC2_LHV:
+                TRAP;
+                break;
+            case OP_LWC2_LFV:
+                TRAP;
+                break;
+            case OP_LWC2_LTV:
+                TRAP;
+                break;
+            }
+            break;
+        case OP_SWC2:
+            switch (RD)
+            {
+            default:
+                TRAP;
+                break;
+            case OP_SWC2_SBV:
+                TRAP;
+                break;
+            case OP_SWC2_SSV:
+                TRAP;
+                break;
+            case OP_SWC2_SLV:
+                TRAP;
+                break;
+            case OP_SWC2_SDV:
+                TRAP;
+                break;
+            case OP_SWC2_SQV:
+                TRAP;
+                break;
+            case OP_SWC2_SRV:
+                TRAP;
+                break;
+            case OP_SWC2_SPV:
+                TRAP;
+                break;
+            case OP_SWC2_SUV:
+                TRAP;
+                break;
+            case OP_SWC2_SHV:
+                TRAP;
+                break;
+            case OP_SWC2_SFV:
+                TRAP;
+                break;
+            case OP_SWC2_SWV:
+                TRAP;
+                break;
+            case OP_SWC2_STV:
+                TRAP;
+                break;
+            }
+            break;
         }
     }
 

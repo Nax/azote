@@ -7,6 +7,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <math.h>
+#include <x86intrin.h>
 #include <azote/azote.h>
 
 inline static uint8_t bswap8(uint8_t in)
@@ -296,6 +297,14 @@ typedef union {
     double      d;
 } AzReg;
 
+typedef union {
+    uint8_t     u8[16];
+    uint16_t    u16[8];
+    uint32_t    u32[4];
+    float       f[4];
+    double      d[2];
+} AzVReg;
+
 typedef struct {
     uint64_t    registers[32];
     uint64_t    hi;
@@ -310,6 +319,7 @@ typedef struct {
     uint16_t    pc2;
     uint32_t    registers[32];
     atomic_u32  cregs[16];
+    AzVReg      vregs[32];
 } AzCoreRSP;
 
 struct AzCOP0_ {

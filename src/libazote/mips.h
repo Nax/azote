@@ -48,11 +48,13 @@
 #define OP_CACHE    0x2f
 #define OP_LL       0x30
 #define OP_LWC1     0x31
+#define OP_LWC2     0x32
 #define OP_LLD      0x34
 #define OP_LDC1     0x35
 #define OP_LD       0x37
 #define OP_SC       0x38
 #define OP_SWC1     0x39
+#define OP_SWC2     0x3a
 #define OP_SCD      0x3c
 #define OP_SDC1     0x3d
 #define OP_SD       0x3f
@@ -164,6 +166,31 @@
 #define OP_CP1_CVT_D        0x21
 #define OP_CP1_CVT_W        0x24
 #define OP_CP1_CVT_L        0x25
+
+#define OP_LWC2_LBV         0x00
+#define OP_LWC2_LSV         0x01
+#define OP_LWC2_LLV         0x02
+#define OP_LWC2_LDV         0x03
+#define OP_LWC2_LQV         0x04
+#define OP_LWC2_LRV         0x05
+#define OP_LWC2_LPV         0x06
+#define OP_LWC2_LUV         0x07
+#define OP_LWC2_LHV         0x08
+#define OP_LWC2_LFV         0x09
+#define OP_LWC2_LTV         0x0b
+
+#define OP_SWC2_SBV         0x00
+#define OP_SWC2_SSV         0x01
+#define OP_SWC2_SLV         0x02
+#define OP_SWC2_SDV         0x03
+#define OP_SWC2_SQV         0x04
+#define OP_SWC2_SRV         0x05
+#define OP_SWC2_SPV         0x06
+#define OP_SWC2_SUV         0x07
+#define OP_SWC2_SHV         0x08
+#define OP_SWC2_SFV         0x09
+#define OP_SWC2_SWV         0x0a
+#define OP_SWC2_STV         0x0b
 
 #define RS      ((op >> 21) & 0x1f)
 #define RT      ((op >> 16) & 0x1f)
