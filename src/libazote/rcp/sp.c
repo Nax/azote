@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h>
 #include <libazote/libazote.h>
 
 static void _dmaReadDRAM(AzState* state)
@@ -9,12 +10,14 @@ static void _dmaReadDRAM(AzState* state)
 
     puts("SP DMA (Read)");
     size = (uint64_t)state->spRegisters[2] + 1;
-    ramAddr = state->piRegisters[0];
-    spAddr = state->piRegisters[1];
+    spAddr = state->spRegisters[0] & 0x1fff;
+    ramAddr = state->spRegisters[1] & 0xffffff;
     printf("0x%08x <- 0x%08x (%llu bytes)\n", spAddr, ramAddr, size);
     getchar();
-    //memcpy(state->rdram + ramAddr, state->cart + (romAddr & 0x0fffffff), size);
-    //azRcpRaiseInterrupt(state, RCP_INTR_PI);
+    if (spAddr & 0x1000)
+        memcpy(state->spImem + (spAddr & 0xfff), state->rdram + ramAddr, size);
+    else
+        memcpy(state->spDmem + (spAddr & 0xfff), state->rdram + ramAddr, size);
 }
 
 static void _dmaWriteDRAM(AzState* state)
@@ -48,6 +51,8 @@ uint32_t azRcpReadSP(AzState* state, uint32_t addr)
         return state->spRegisters[3];
     case SP_STATUS_REG:
         return state->spRegisters[4];
+    case SP_PC_REG:
+        return state->rsp.pc;
     default:
         return 0;
     }
@@ -100,6 +105,12 @@ void azRcpWriteSP(AzState* state, uint32_t addr, uint32_t value)
         else if (value & 0x01000000) state->spRegisters[4] |= 0x4000;           // set signal 7
         printf("RSP: %s\n", (state->spRegisters[4] & 0x01) ? "HALT" : "RUN");
         getchar();
+        if (!(state->spRegisters[4] & 0x01))
+            azRunRSP(state);
+        return;
+    case SP_PC_REG:
+        state->rsp.pc = value;
+        state->rsp.pc2 = value + 4;
         return;
     default:
         return;

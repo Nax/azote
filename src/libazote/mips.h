@@ -176,7 +176,6 @@
 
 #define IMM     ((uint64_t)(op & 0xffff))
 #define SIMM    ((int64_t)((int16_t)(op & 0xffff)))
-#define TRAP    do { printf("TRAP at %016llx\n", pc); getchar(); } while (0)
 
 static inline int32_t sra32(int32_t x, uint8_t shift)
 {

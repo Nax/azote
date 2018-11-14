@@ -5,7 +5,9 @@
 #include <libazote/libazote.h>
 #include <libazote/mips.h>
 
-void _runCycles(AzState* state, uint32_t cycles)
+#define TRAP    do { printf("CPU TRAP at 0x%016llx    OP: 0x%08x\n", pc, op); getchar(); } while (0)
+
+static void _runCycles(AzState* state, uint32_t cycles)
 {
     uint32_t op;
     uint64_t pc;
@@ -820,7 +822,7 @@ void _runCycles(AzState* state, uint32_t cycles)
     state->cpu.lo = lo.u64;
 }
 
-uint64_t _getTimeNano()
+static inline uint64_t _getTimeNano()
 {
     return clock_gettime_nsec_np(CLOCK_UPTIME_RAW);
 }
@@ -852,7 +854,7 @@ void azRun(AzState* state)
         if ((now - baseTime) >= 1000000000)
         {
             double instrPerSecond = (double)cycles / ((double)(now - baseTime) * 1e-9);
-            printf("Vi/s: %.2fM   (PC: 0x%016llx)\n", instrPerSecond / 1000000, state->cpu.pc);
+            printf("CPU Vi/s: %.2fM   (PC: 0x%016llx)\n", instrPerSecond / 1000000, state->cpu.pc);
             baseTime = now;
             cycles = 0;
         }

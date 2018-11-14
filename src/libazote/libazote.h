@@ -139,6 +139,8 @@ void azMemoryWrite16(AzState* state, uint64_t addr, uint16_t value);
 void azMemoryWrite32(AzState* state, uint64_t addr, uint32_t value);
 void azMemoryWrite64(AzState* state, uint64_t addr, uint64_t value);
 
+void azRunRSP(AzState* state);
+
 /* COP0 */
 #define COP0_REG_INDEX          0
 #define COP0_REG_RANDOM         1
@@ -259,29 +261,33 @@ void        azRcpWriteAI(AzState* state, uint32_t addr, uint32_t value);
 void        azRcpWriteVI(AzState* state, uint32_t addr, uint32_t value);
 void        azRcpWriteSI(AzState* state, uint32_t addr, uint32_t value);
 
-typedef union AzReg_    AzReg;
-typedef struct AzCPU_   AzCPU;
 typedef struct AzCOP0_  AzCOP0;
 typedef struct AzCOP1_  AzCOP1;
 typedef struct AzTLB_   AzTLB;
 
-union AzReg_ {
+typedef union {
     uint64_t    u64;
     int64_t     i64;
     uint32_t    u32;
     int32_t     i32;
     float       f;
     double      d;
-};
+} AzReg;
 
-struct AzCPU_ {
+typedef struct {
     uint64_t    registers[32];
     uint64_t    hi;
     uint64_t    lo;
     uint64_t    pc;
     uint64_t    pc2;
     uint8_t     ll:1;
-};
+} AzCPU;
+
+typedef struct {
+    uint16_t    pc;
+    uint16_t    pc2;
+    AzReg       registers[32];
+} AzCoreRSP;
 
 struct AzCOP0_ {
     uint64_t    registers[32];
@@ -302,6 +308,7 @@ struct AzTLB_ {
 
 struct AzState_ {
     AzCPU       cpu;
+    AzCoreRSP   rsp;
     AzCOP0      cop0;
     AzCOP1      cop1;
     AzTLB       tlb;
