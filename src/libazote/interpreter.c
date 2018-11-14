@@ -1057,7 +1057,7 @@ void azRun(AzState* state)
         if (dt >= kPeriod)
         {
             referenceTime += kPeriod;
-            //azRcpRaiseInterrupt(state, RCP_INTR_VI);
+            azRcpRaiseInterrupt(state, RCP_INTR_VI);
         }
         if ((now - baseTime) >= 1000000000)
         {
