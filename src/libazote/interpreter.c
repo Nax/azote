@@ -976,13 +976,13 @@ void _runCycles(AzState* state, uint32_t cycles)
             TRAP;
             break;
         case OP_LWC1:
-            TRAP;
+            state->cop1.registers[RT].u32 = azMemoryRead32(state, regs[RS].u64 + SIMM);
             break;
         case OP_LLD:
             TRAP;
             break;
         case OP_LDC1:
-            TRAP;
+            state->cop1.registers[RT].u64 = azMemoryRead64(state, regs[RS].u64 + SIMM);
             break;
         case OP_LD:
             if (RT) regs[RT].u64 = azMemoryRead64(state, regs[RS].u64 + SIMM);
@@ -991,13 +991,13 @@ void _runCycles(AzState* state, uint32_t cycles)
             TRAP;
             break;
         case OP_SWC1:
-            TRAP;
+            azMemoryWrite32(state, regs[RS].u64 + SIMM, state->cop1.registers[RT].u32);
             break;
         case OP_SCD:
             TRAP;
             break;
         case OP_SDC1:
-            TRAP;
+            azMemoryWrite64(state, regs[RS].u64 + SIMM, state->cop1.registers[RT].u64);
             break;
         case OP_SD:
             azMemoryWrite64(state, regs[RS].u64 + SIMM, regs[RT].u64);
