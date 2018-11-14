@@ -286,7 +286,7 @@ typedef struct {
 typedef struct {
     uint16_t    pc;
     uint16_t    pc2;
-    AzReg       registers[32];
+    uint32_t    registers[32];
 } AzCoreRSP;
 
 struct AzCOP0_ {

@@ -12,7 +12,7 @@ static void _runCycles(AzState* state, uint32_t cycles)
     uint32_t op;
     uint16_t pc;
     uint16_t pc2;
-    AzReg* regs;
+    uint32_t* regs;
 
     regs = state->rsp.registers;
     pc = state->rsp.pc;
@@ -59,69 +59,14 @@ static void _runCycles(AzState* state, uint32_t cycles)
             case OP_SPECIAL_JALR:
                 TRAP;
                 break;
-            case OP_SPECIAL_SYSCALL:
-                TRAP;
-                break;
             case OP_SPECIAL_BREAK:
                 TRAP;
                 break;
-            case OP_SPECIAL_SYNC:
-                TRAP;
-                break;
-            case OP_SPECIAL_MFHI:
-                TRAP;
-                break;
-            case OP_SPECIAL_MTHI:
-                TRAP;
-                break;
-            case OP_SPECIAL_MFLO:
-                TRAP;
-                break;
-            case OP_SPECIAL_MTLO:
-                TRAP;
-                break;
-            case OP_SPECIAL_DSLLV:
-                TRAP;
-                break;
-            case OP_SPECIAL_DSRLV:
-                TRAP;
-                break;
-            case OP_SPECIAL_DSRAV:
-                TRAP;
-                break;
-            case OP_SPECIAL_MULT:
-                TRAP;
-                break;
-            case OP_SPECIAL_MULTU:
-                TRAP;
-                break;
-            case OP_SPECIAL_DIV:
-                TRAP;
-                break;
-            case OP_SPECIAL_DIVU:
-                TRAP;
-                break;
-            case OP_SPECIAL_DMULT:
-                TRAP;
-                break;
-            case OP_SPECIAL_DMULTU:
-                TRAP;
-                break;
-            case OP_SPECIAL_DDIV:
-                TRAP;
-                break;
-            case OP_SPECIAL_DDIVU:
-                TRAP;
-                break;
             case OP_SPECIAL_ADD:
-                TRAP;
-                break;
             case OP_SPECIAL_ADDU:
                 TRAP;
                 break;
             case OP_SPECIAL_SUB:
-                TRAP;
-                break;
             case OP_SPECIAL_SUBU:
                 TRAP;
                 break;
@@ -143,54 +88,6 @@ static void _runCycles(AzState* state, uint32_t cycles)
             case OP_SPECIAL_SLTU:
                 TRAP;
                 break;
-            case OP_SPECIAL_DADD:
-                TRAP;
-                break;
-            case OP_SPECIAL_DADDU:
-                TRAP;
-                break;
-            case OP_SPECIAL_DSUB:
-                TRAP;
-                break;
-            case OP_SPECIAL_DSUBU:
-                TRAP;
-                break;
-            case OP_SPECIAL_TGE:
-                TRAP;
-                break;
-            case OP_SPECIAL_TGEU:
-                TRAP;
-                break;
-            case OP_SPECIAL_TLT:
-                TRAP;
-                break;
-            case OP_SPECIAL_TLTU:
-                TRAP;
-                break;
-            case OP_SPECIAL_TEQ:
-                TRAP;
-                break;
-            case OP_SPECIAL_TNE:
-                TRAP;
-                break;
-            case OP_SPECIAL_DSLL:
-                TRAP;
-                break;
-            case OP_SPECIAL_DSRL:
-                TRAP;
-                break;
-            case OP_SPECIAL_DSRA:
-                TRAP;
-                break;
-            case OP_SPECIAL_DSLL32:
-                TRAP;
-                break;
-            case OP_SPECIAL_DSRL32:
-                TRAP;
-                break;
-            case OP_SPECIAL_DSRA32:
-                TRAP;
-                break;
             }
             break;
         case OP_REGIMM:
@@ -202,40 +99,10 @@ static void _runCycles(AzState* state, uint32_t cycles)
             case OP_REGIMM_BGEZ:
                 TRAP;
                 break;
-            case OP_REGIMM_BLTZL:
-                TRAP;
-                break;
-            case OP_REGIMM_BGEZL:
-                TRAP;
-                break;
-            case OP_REGIMM_TGEI:
-                TRAP;
-                break;
-            case OP_REGIMM_TGEIU:
-                TRAP;
-                break;
-            case OP_REGIMM_TLTI:
-                TRAP;
-                break;
-            case OP_REGIMM_TLTIU:
-                TRAP;
-                break;
-            case OP_REGIMM_TEQI:
-                TRAP;
-                break;
-            case OP_REGIMM_TNEI:
-                TRAP;
-                break;
             case OP_REGIMM_BLTZAL:
                 TRAP;
                 break;
             case OP_REGIMM_BGEZAL:
-                TRAP;
-                break;
-            case OP_REGIMM_BLTZALL:
-                TRAP;
-                break;
-            case OP_REGIMM_BGEZALL:
                 TRAP;
                 break;
             }
@@ -259,14 +126,10 @@ static void _runCycles(AzState* state, uint32_t cycles)
             TRAP;
             break;
         case OP_ADDI:
-            TRAP;
-            break;
         case OP_ADDIU:
             TRAP;
             break;
         case OP_SLTI:
-            TRAP;
-            break;
         case OP_SLTIU:
             TRAP;
             break;
@@ -285,43 +148,13 @@ static void _runCycles(AzState* state, uint32_t cycles)
         case OP_COP0:
             TRAP;
             break;
-        case OP_COP1:
-            TRAP;
-            break;
         case OP_COP2:
-            TRAP;
-            break;
-        case OP_BEQL:
-            TRAP;
-            break;
-        case OP_BNEL:
-            TRAP;
-            break;
-        case OP_BLEZL:
-            TRAP;
-            break;
-        case OP_BGTZL:
-            TRAP;
-            break;
-        case OP_DADDI:
-            TRAP;
-            break;
-        case OP_DADDIU:
-            TRAP;
-            break;
-        case OP_LDL:
-            TRAP;
-            break;
-        case OP_LDR:
             TRAP;
             break;
         case OP_LB:
             TRAP;
             break;
         case OP_LH:
-            TRAP;
-            break;
-        case OP_LWL:
             TRAP;
             break;
         case OP_LW:
@@ -333,64 +166,16 @@ static void _runCycles(AzState* state, uint32_t cycles)
         case OP_LHU:
             TRAP;
             break;
-        case OP_LWR:
-            TRAP;
-            break;
-        case OP_LWU:
-            TRAP;
-            break;
         case OP_SB:
             TRAP;
             break;
         case OP_SH:
             TRAP;
             break;
-        case OP_SWL:
-            TRAP;
-            break;
         case OP_SW:
             TRAP;
             break;
-        case OP_SDL:
-            TRAP;
-            break;
-        case OP_SDR:
-            TRAP;
-            break;
-        case OP_SWR:
-            TRAP;
-            break;
         case OP_CACHE:
-            TRAP;
-            break;
-        case OP_LL:
-            TRAP;
-            break;
-        case OP_LWC1:
-            TRAP;
-            break;
-        case OP_LLD:
-            TRAP;
-            break;
-        case OP_LDC1:
-            TRAP;
-            break;
-        case OP_LD:
-            TRAP;
-            break;
-        case OP_SC:
-            TRAP;
-            break;
-        case OP_SWC1:
-            TRAP;
-            break;
-        case OP_SCD:
-            TRAP;
-            break;
-        case OP_SDC1:
-            TRAP;
-            break;
-        case OP_SD:
             TRAP;
             break;
         }
