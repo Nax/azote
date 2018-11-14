@@ -169,10 +169,16 @@ static void _handleInterrupts(AzState* state)
 #define SA      ((op >>  6) & 0x1f)
 #define IMM     ((uint64_t)(op & 0xffff))
 #define SIMM    ((int64_t)((int16_t)(op & 0xffff)))
+#define TRAP    do { printf("TRAP at %016llx\n", pc); getchar(); } while (0)
 
 static int32_t sra32(int32_t x, uint8_t shift)
 {
     return (int32_t)(((uint32_t)x >> shift) | -(((uint32_t)x & ~(UINT32_MAX >> 1)) >> shift));
+}
+
+static int64_t sra64(int64_t x, uint8_t shift)
+{
+    return (int64_t)(((uint64_t)x >> shift) | -(((uint64_t)x & ~(UINT64_MAX >> 1)) >> shift));
 }
 
 uint64_t pcBak;
@@ -183,6 +189,8 @@ void _runCycles(AzState* state, uint32_t cycles)
     uint64_t pc;
     uint64_t pc2;
     uint64_t tmp;
+    uint64_t tmp2;
+    __uint128_t u128;
     AzReg* regs = (AzReg*)(&state->cpu.registers[0]);
     AzReg hi;
     AzReg lo;
@@ -195,7 +203,6 @@ void _runCycles(AzState* state, uint32_t cycles)
 
     for (uint32_t i = 0; i < cycles; ++i)
     {
-        _handleInterrupts(state);
         op = azMemoryRead32(state, pc);
         pcBak = pc;
         pc = pc2;
@@ -203,9 +210,15 @@ void _runCycles(AzState* state, uint32_t cycles)
 
         switch (op >> 26)
         {
+        default:
+            TRAP;
+            break;
         case OP_SPECIAL:
             switch (op & 0x3f)
             {
+            default:
+                TRAP;
+                break;
             case OP_SPECIAL_SLL:
                 if (RD) regs[RD].i64 = (int32_t)(regs[RT].i32 << SA);
                 break;
@@ -232,10 +245,13 @@ void _runCycles(AzState* state, uint32_t cycles)
                 pc2 = regs[RS].u64;
                 break;
             case OP_SPECIAL_SYSCALL:
+                TRAP;
                 break;
             case OP_SPECIAL_BREAK:
+                TRAP;
                 break;
             case OP_SPECIAL_SYNC:
+                TRAP;
                 break;
             case OP_SPECIAL_MFHI:
                 if (RD) regs[RD].u64 = hi.u64;
@@ -250,10 +266,13 @@ void _runCycles(AzState* state, uint32_t cycles)
                 lo.u64 = regs[RD].u64;
                 break;
             case OP_SPECIAL_DSLLV:
+                if (RD) regs[RD].u64 = regs[RT].u64 << (regs[RS].u64 & 0x3f);
                 break;
             case OP_SPECIAL_DSRLV:
+                if (RD) regs[RD].u64 = regs[RT].u64 >> (regs[RS].u64 & 0x3f);
                 break;
             case OP_SPECIAL_DSRAV:
+                if (RD) regs[RD].u64 = sra64(regs[RT].i64, regs[RS].u64 & 0x3f);
                 break;
             case OP_SPECIAL_MULT:
                 tmp = (int64_t)regs[RS].i32 * (int64_t)regs[RT].i32;
@@ -274,12 +293,22 @@ void _runCycles(AzState* state, uint32_t cycles)
                 hi.i64 = (int32_t)(regs[RS].u32 % regs[RT].u32);
                 break;
             case OP_SPECIAL_DMULT:
+                u128 = (__int128_t)regs[RS].i64 * (__int128_t)regs[RT].i64;
+                hi.u64 = (u128 >> 64);
+                lo.u64 = (u128 & 0xffffffffffffffff);
                 break;
             case OP_SPECIAL_DMULTU:
+                u128 = (__uint128_t)regs[RS].u64 * (__uint128_t)regs[RT].u64;
+                hi.u64 = (u128 >> 64);
+                lo.u64 = (u128 & 0xffffffffffffffff);
                 break;
             case OP_SPECIAL_DDIV:
+                lo.u64 = regs[RS].i64 / regs[RT].i64;
+                hi.u64 = regs[RS].i64 % regs[RT].i64;
                 break;
             case OP_SPECIAL_DDIVU:
+                lo.u64 = regs[RS].u64 / regs[RT].u64;
+                hi.u64 = regs[RS].u64 % regs[RT].u64;
                 break;
             case OP_SPECIAL_ADD:
                 if (RD) regs[RD].i64 = (int32_t)(regs[RS].u32 + regs[RT].u32);
@@ -324,42 +353,61 @@ void _runCycles(AzState* state, uint32_t cycles)
                 }
                 break;
             case OP_SPECIAL_DADD:
+                if (RD) regs[RD].u64 = regs[RS].u64 + regs[RT].u64;
                 break;
             case OP_SPECIAL_DADDU:
+                if (RD) regs[RD].u64 = regs[RS].u64 + regs[RT].u64;
                 break;
             case OP_SPECIAL_DSUB:
+                if (RD) regs[RD].u64 = regs[RS].u64 - regs[RT].u64;
                 break;
             case OP_SPECIAL_DSUBU:
+                if (RD) regs[RD].u64 = regs[RS].u64 - regs[RT].u64;
                 break;
             case OP_SPECIAL_TGE:
+                TRAP;
                 break;
             case OP_SPECIAL_TGEU:
+                TRAP;
                 break;
             case OP_SPECIAL_TLT:
+                TRAP;
                 break;
             case OP_SPECIAL_TLTU:
+                TRAP;
                 break;
             case OP_SPECIAL_TEQ:
+                TRAP;
                 break;
             case OP_SPECIAL_TNE:
+                TRAP;
                 break;
             case OP_SPECIAL_DSLL:
+                if (RD) regs[RD].u64 = regs[RT].u64 << SA;
                 break;
             case OP_SPECIAL_DSRL:
+                if (RD) regs[RD].u64 = regs[RT].u64 >> SA;
                 break;
             case OP_SPECIAL_DSRA:
+                if (RD) regs[RD].u64 = sra64(regs[RT].i64, SA);
                 break;
             case OP_SPECIAL_DSLL32:
+                if (RD) regs[RD].u64 = regs[RT].u64 << (SA + 32);
                 break;
             case OP_SPECIAL_DSRL32:
+                if (RD) regs[RD].u64 = regs[RT].u64 >> (SA + 32);
                 break;
             case OP_SPECIAL_DSRA32:
+                if (RD) regs[RD].u64 = sra64(regs[RT].i64, SA + 32);
                 break;
             }
             break;
         case OP_REGIMM:
             switch (RT)
             {
+            default:
+                TRAP;
+                break;
             case OP_REGIMM_BLTZ:
                 if (regs[RS].i64 < 0) pc2 = pc + (SIMM << 2);
                 break;
@@ -389,21 +437,24 @@ void _runCycles(AzState* state, uint32_t cycles)
                 }
                 break;
             case OP_REGIMM_TGEI:
+                TRAP;
                 break;
             case OP_REGIMM_TGEIU:
+                TRAP;
                 break;
             case OP_REGIMM_TLTI:
+                TRAP;
                 break;
             case OP_REGIMM_TLTIU:
+                TRAP;
                 break;
             case OP_REGIMM_TEQI:
+                TRAP;
                 break;
             case OP_REGIMM_TNEI:
+                TRAP;
                 break;
             case OP_REGIMM_BLTZAL:
-                /* Debug */
-                azDebugDumpState(state);
-                getchar();
                 regs[31].u64 = pc + 4;
                 if (regs[RS].i64 < 0)
                 {
@@ -411,9 +462,6 @@ void _runCycles(AzState* state, uint32_t cycles)
                 }
                 break;
             case OP_REGIMM_BGEZAL:
-                /* Debug */
-                azDebugDumpState(state);
-                getchar();
                 regs[31].u64 = pc + 4;
                 if (regs[RS].i64 >= 0)
                 {
@@ -421,9 +469,6 @@ void _runCycles(AzState* state, uint32_t cycles)
                 }
                 break;
             case OP_REGIMM_BLTZALL:
-                /* Debug */
-                azDebugDumpState(state);
-                getchar();
                 regs[31].u64 = pc + 4;
                 if (regs[RS].i64 < 0)
                 {
@@ -436,9 +481,6 @@ void _runCycles(AzState* state, uint32_t cycles)
                 }
                 break;
             case OP_REGIMM_BGEZALL:
-                /* Debug */
-                azDebugDumpState(state);
-                getchar();
                 regs[31].u64 = pc + 4;
                 if (regs[RS].i64 >= 0)
                 {
@@ -516,6 +558,9 @@ void _runCycles(AzState* state, uint32_t cycles)
         case OP_COP0:
             switch (RS)
             {
+            default:
+                TRAP;
+                break;
             case OP_COP_MF:
                 if (RT) regs[RT].i64 = (int32_t)state->cop0.registers[RD];
                 break;
@@ -548,13 +593,24 @@ void _runCycles(AzState* state, uint32_t cycles)
             case 0x1f:
                 switch (op & 0x3f)
                 {
+                default:
+                    TRAP;
+                    break;
                 case OP_CP0_TLBR:
+                    // TRAP;
                     break;
                 case OP_CP0_TLBWI:
+                    tmp = state->cop0.registers[COP0_REG_INDEX] & 0x1f;
+                    state->tlb.lo0[tmp] = state->cop0.registers[COP0_REG_ENTRYLO0];
+                    state->tlb.lo1[tmp] = state->cop0.registers[COP0_REG_ENTRYLO1];
+                    state->tlb.hi[tmp] = state->cop0.registers[COP0_REG_ENTRYHI];
+                    state->tlb.mask[tmp] = state->cop0.registers[COP0_REG_PAGE_MASK];
                     break;
                 case OP_CP0_TLBWR:
+                    TRAP;
                     break;
                 case OP_CP0_TLBP:
+                    // TRAP;
                     break;
                 case OP_CP0_ERET:
                     printf("ERET\n");
@@ -575,8 +631,45 @@ void _runCycles(AzState* state, uint32_t cycles)
             }
             break;
         case OP_COP1:
+            switch (RS)
+            {
+            default:
+                TRAP;
+                break;
+            case OP_COP_MF:
+                TRAP;
+                break;
+            case OP_COP_DMF:
+                TRAP;
+                break;
+            case OP_COP_CF:
+                if (RT)
+                {
+                    if (RD == 0)
+                        regs[RT].u64 = state->cop1.fcr0;
+                    else if (RD == 31)
+                        regs[RT].u64 = state->cop1.fcr31;
+                }
+                break;
+            case OP_COP_MT:
+                TRAP;
+                break;
+            case OP_COP_DMT:
+                TRAP;
+                break;
+            case OP_COP_CT:
+                if (RD == 0)
+                    state->cop1.fcr0 = regs[RT].u32;
+                else if (RD == 31)
+                    state->cop1.fcr31 = regs[RT].u32;
+                break;
+            case OP_COP_BC:
+                TRAP;
+                break;
+            }
             break;
         case OP_COP2:
+            TRAP;
             break;
         case OP_BEQL:
             if (regs[RS].u64 == regs[RT].u64)
@@ -631,8 +724,10 @@ void _runCycles(AzState* state, uint32_t cycles)
                 regs[RT].i64 = regs[RS].i64 + SIMM;
             break;
         case OP_LDL:
+            TRAP;
             break;
         case OP_LDR:
+            TRAP;
             break;
         case OP_LB:
             if (RT)
@@ -643,6 +738,7 @@ void _runCycles(AzState* state, uint32_t cycles)
                 regs[RT].i64 = (int16_t)azMemoryRead16(state, regs[RS].u64 + SIMM);
             break;
         case OP_LWL:
+            TRAP;
             break;
         case OP_LW:
             if (RT)
@@ -657,6 +753,7 @@ void _runCycles(AzState* state, uint32_t cycles)
                 regs[RT].u64 = azMemoryRead16(state, regs[RS].u64 + SIMM);
             break;
         case OP_LWR:
+            TRAP;
             break;
         case OP_LWU:
             if (RT)
@@ -669,38 +766,71 @@ void _runCycles(AzState* state, uint32_t cycles)
             azMemoryWrite16(state, regs[RS].u64 + SIMM, regs[RT].u64);
             break;
         case OP_SWL:
+            TRAP;
             break;
         case OP_SW:
             azMemoryWrite32(state, regs[RS].u64 + SIMM, regs[RT].u64);
             break;
         case OP_SDL:
+            TRAP;
             break;
         case OP_SDR:
+            TRAP;
             break;
         case OP_SWR:
+            TRAP;
             break;
         case OP_CACHE:
+            // TRAP;
             break;
         case OP_LL:
+            TRAP;
             break;
         case OP_LWC1:
+            TRAP;
             break;
         case OP_LLD:
+            TRAP;
             break;
         case OP_LDC1:
+            TRAP;
             break;
         case OP_LD:
+            if (RT) regs[RT].u64 = azMemoryRead64(state, regs[RS].u64 + SIMM);
             break;
         case OP_SC:
+            TRAP;
             break;
         case OP_SWC1:
+            TRAP;
             break;
         case OP_SCD:
+            TRAP;
             break;
         case OP_SDC1:
+            TRAP;
             break;
         case OP_SD:
+            azMemoryWrite64(state, regs[RS].u64 + SIMM, regs[RT].u64);
             break;
+        }
+
+        /* Handle Interrupts */
+        tmp = state->cop0.registers[COP0_REG_STATUS];
+        if ((tmp & 0x01) == 0 || (tmp & 0x06) != 0)
+            continue;
+        tmp2 = (state->cop0.registers[COP0_REG_CAUSE] >> 8) & 0xff;
+        tmp2 &= ((tmp >> 8) & 0xff);
+        if (tmp2)
+        {
+            printf("INTERRUPT\n");
+            int bd = (pc2 != pc + 4);
+            state->cop0.registers[COP0_REG_STATUS] |= 0x02;
+            state->cop0.registers[COP0_REG_EPC] = pc;
+            if (bd)
+                state->cop0.registers[COP0_REG_EPC] -= 4;
+            pc = 0xffffffff80000180;
+            pc2 = pc + 4;
         }
     }
 
