@@ -7,11 +7,21 @@
 
 #define TRAP    do { printf("RSP TRAP at 0x%04x    OP: 0x%08x\n", pc, op); getchar(); } while (0)
 
+static void* bswapCopy128(void* restrict dst, uint8_t base, void* restrict src, size_t len)
+{
+    char* cDst = (char*)dst;
+    char* cSrc = (char*)src;
+    for (size_t i = 0; i < len; ++i)
+        cDst[15 - base - i] = cSrc[i];
+    return cDst;
+}
+
 static void _runCycles(AzState* state, uint32_t cycles)
 {
     uint32_t op;
     uint16_t pc;
     uint16_t pc2;
+    uint32_t tmp;
     uint32_t* regs;
 
     regs = state->rsp.registers;
@@ -227,22 +237,24 @@ static void _runCycles(AzState* state, uint32_t cycles)
                 TRAP;
                 break;
             case OP_LWC2_LBV:
-                TRAP;
+                state->rsp.vregs[RT].u8[15 - VE] = *(uint8_t*)(state->spDmem + (regs[RS] & 0xfff) + VOFF);
                 break;
             case OP_LWC2_LSV:
-                TRAP;
+                state->rsp.vregs[RT].u16[7 - (VE / 2)] = bswap16(*(uint16_t*)(state->spDmem + (regs[RS] & 0xfff) + (VOFF << 1)));
                 break;
             case OP_LWC2_LLV:
-                TRAP;
+                state->rsp.vregs[RT].u32[3 - (VE / 4)] = bswap32(*(uint32_t*)(state->spDmem + (regs[RS] & 0xfff) + (VOFF << 2)));
                 break;
             case OP_LWC2_LDV:
-                TRAP;
+                state->rsp.vregs[RT].u64[1 - (VE / 8)] = bswap64(*(uint64_t*)(state->spDmem + (regs[RS] & 0xfff) + (VOFF << 3)));
                 break;
             case OP_LWC2_LQV:
-                TRAP;
+                tmp = (regs[RS] + VOFF) & 0xfff;
+                bswapCopy128(state->rsp.vregs[RT].u8, 0, state->spDmem + tmp, ((tmp - 1) % 16) + 1);
                 break;
             case OP_LWC2_LRV:
-                TRAP;
+                tmp = (regs[RS] + VOFF) & 0xfff;
+                bswapCopy128(state->rsp.vregs[RT].u8, tmp % 16, state->spDmem + (tmp & 0xff0), tmp % 16);
                 break;
             case OP_LWC2_LPV:
                 TRAP;
@@ -268,16 +280,16 @@ static void _runCycles(AzState* state, uint32_t cycles)
                 TRAP;
                 break;
             case OP_SWC2_SBV:
-                TRAP;
+                *(uint8_t*)(state->spDmem + (regs[RS] & 0xfff) + VOFF) = state->rsp.vregs[RT].u8[15 - VE];
                 break;
             case OP_SWC2_SSV:
-                TRAP;
+                *(uint16_t*)(state->spDmem + (regs[RS] & 0xfff) + (VOFF << 1)) = bswap16(state->rsp.vregs[RT].u16[7 - (VE / 8)]);
                 break;
             case OP_SWC2_SLV:
-                TRAP;
+                *(uint32_t*)(state->spDmem + (regs[RS] & 0xfff) + (VOFF << 2)) = bswap32(state->rsp.vregs[RT].u32[3 - (VE / 4)]);
                 break;
             case OP_SWC2_SDV:
-                TRAP;
+                *(uint64_t*)(state->spDmem + (regs[RS] & 0xfff) + (VOFF << 3)) = bswap64(state->rsp.vregs[RT].u64[1 - (VE / 2)]);
                 break;
             case OP_SWC2_SQV:
                 TRAP;

@@ -201,6 +201,9 @@
 #define FS      RD
 #define FD      SA
 
+#define VE      ((op >> 7) & 0xf)
+#define VOFF    (op & 0x7f)
+
 #define IMM     ((uint64_t)(op & 0xffff))
 #define SIMM    ((int64_t)((int16_t)(op & 0xffff)))
 
