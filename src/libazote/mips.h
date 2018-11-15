@@ -192,6 +192,51 @@
 #define OP_SWC2_SWV         0x0a
 #define OP_SWC2_STV         0x0b
 
+#define OP_CP2_VMULF        0x00
+#define OP_CP2_VMULU        0x01
+#define OP_CP2_VRNDP        0x02
+#define OP_CP2_VMULQ        0x03
+#define OP_CP2_VMUDL        0x04
+#define OP_CP2_VMUDM        0x05
+#define OP_CP2_VMUDN        0x06
+#define OP_CP2_VMUDH        0x07
+#define OP_CP2_VMACF        0x08
+#define OP_CP2_VMACU        0x09
+#define OP_CP2_VRNDN        0x0a
+#define OP_CP2_VMACQ        0x0b
+#define OP_CP2_VMADL        0x0c
+#define OP_CP2_VMADM        0x0d
+#define OP_CP2_VMADN        0x0e
+#define OP_CP2_VMADH        0x0f
+#define OP_CP2_VADD         0x10
+#define OP_CP2_VSUB         0x11
+#define OP_CP2_VABS         0x13
+#define OP_CP2_VADDC        0x14
+#define OP_CP2_VSUBC        0x15
+#define OP_CP2_VSAR         0x1d
+#define OP_CP2_VLT          0x20
+#define OP_CP2_VEQ          0x21
+#define OP_CP2_VNE          0x22
+#define OP_CP2_VGE          0x23
+#define OP_CP2_VCL          0x24
+#define OP_CP2_VCH          0x25
+#define OP_CP2_VCR          0x26
+#define OP_CP2_VMGR         0x27
+#define OP_CP2_VAND         0x28
+#define OP_CP2_VNAND        0x29
+#define OP_CP2_VOR          0x2a
+#define OP_CP2_VNOR         0x2b
+#define OP_CP2_VXOR         0x2c
+#define OP_CP2_VNXOR        0x2d
+#define OP_CP2_VRCP         0x30
+#define OP_CP2_VRCPL        0x31
+#define OP_CP2_VRCPH        0x32
+#define OP_CP2_VMOV         0x33
+#define OP_CP2_VRSQ         0x34
+#define OP_CP2_VRSQL        0x35
+#define OP_CP2_VRSQH        0x36
+#define OP_CP2_VNOP         0x37
+
 #define RS      ((op >> 21) & 0x1f)
 #define RT      ((op >> 16) & 0x1f)
 #define RD      ((op >> 11) & 0x1f)

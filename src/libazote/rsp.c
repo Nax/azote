@@ -212,6 +212,161 @@ static void _runCycles(AzState* state, uint32_t cycles)
             case OP_COP_MF:
                 regs[RT] = (int32_t)((int16_t)state->rsp.vregs[RD].u16[7 - (VE / 2)]);
                 break;
+            case 0x10:
+            case 0x11:
+            case 0x12:
+            case 0x13:
+            case 0x14:
+            case 0x15:
+            case 0x16:
+            case 0x17:
+            case 0x18:
+            case 0x19:
+            case 0x1a:
+            case 0x1b:
+            case 0x1c:
+            case 0x1d:
+            case 0x1e:
+            case 0x1f:
+                switch (op & 0x3f)
+                {
+                default:
+                    TRAP;
+                    break;
+                case OP_CP2_VMULF:
+                    TRAP;
+                    break;
+                case OP_CP2_VMULU:
+                    TRAP;
+                    break;
+                case OP_CP2_VRNDP:
+                    TRAP;
+                    break;
+                case OP_CP2_VMULQ:
+                    TRAP;
+                    break;
+                case OP_CP2_VMUDL:
+                    TRAP;
+                    break;
+                case OP_CP2_VMUDM:
+                    TRAP;
+                    break;
+                case OP_CP2_VMUDN:
+                    TRAP;
+                    break;
+                case OP_CP2_VMUDH:
+                    TRAP;
+                    break;
+                case OP_CP2_VMACF:
+                    TRAP;
+                    break;
+                case OP_CP2_VMACU:
+                    TRAP;
+                    break;
+                case OP_CP2_VRNDN:
+                    TRAP;
+                    break;
+                case OP_CP2_VMACQ:
+                    TRAP;
+                    break;
+                case OP_CP2_VMADL:
+                    TRAP;
+                    break;
+                case OP_CP2_VMADM:
+                    TRAP;
+                    break;
+                case OP_CP2_VMADN:
+                    TRAP;
+                    break;
+                case OP_CP2_VMADH:
+                    TRAP;
+                    break;
+                case OP_CP2_VADD:
+                    TRAP;
+                    break;
+                case OP_CP2_VSUB:
+                    TRAP;
+                    break;
+                case OP_CP2_VABS:
+                    TRAP;
+                    break;
+                case OP_CP2_VADDC:
+                    TRAP;
+                    break;
+                case OP_CP2_VSUBC:
+                    TRAP;
+                    break;
+                case OP_CP2_VSAR:
+                    TRAP;
+                    break;
+                case OP_CP2_VLT:
+                    TRAP;
+                    break;
+                case OP_CP2_VEQ:
+                    TRAP;
+                    break;
+                case OP_CP2_VNE:
+                    TRAP;
+                    break;
+                case OP_CP2_VGE:
+                    TRAP;
+                    break;
+                case OP_CP2_VCL:
+                    TRAP;
+                    break;
+                case OP_CP2_VCH:
+                    TRAP;
+                    break;
+                case OP_CP2_VCR:
+                    TRAP;
+                    break;
+                case OP_CP2_VMGR:
+                    TRAP;
+                    break;
+                case OP_CP2_VAND:
+                    TRAP;
+                    break;
+                case OP_CP2_VNAND:
+                    TRAP;
+                    break;
+                case OP_CP2_VOR:
+                    TRAP;
+                    break;
+                case OP_CP2_VNOR:
+                    TRAP;
+                    break;
+                case OP_CP2_VXOR:
+                    TRAP;
+                    break;
+                case OP_CP2_VNXOR:
+                    TRAP;
+                    break;
+                case OP_CP2_VRCP:
+                    TRAP;
+                    break;
+                case OP_CP2_VRCPL:
+                    TRAP;
+                    break;
+                case OP_CP2_VRCPH:
+                    TRAP;
+                    break;
+                case OP_CP2_VMOV:
+                    TRAP;
+                    break;
+                case OP_CP2_VRSQ:
+                    TRAP;
+                    break;
+                case OP_CP2_VRSQL:
+                    TRAP;
+                    break;
+                case OP_CP2_VRSQH:
+                    TRAP;
+                    break;
+                case OP_CP2_VNOP:
+                    TRAP;
+                    break;
+                }
+                break;
             }
             break;
         case OP_LB:
