@@ -13,7 +13,7 @@ static void _dmaRead(AzState* state)
     uint32_t ramAddr;
     uint32_t spAddr;
 
-    puts("SP DMA (Read)");
+    //puts("SP DMA (Read)");
     pack = state->rsp.cregs[RSP_CREG_DMA_READ_LENGTH];
     length = ((pack & 0xfff) | 0x7) + 1;
     count = ((pack >> 12) & 0xff) + 1;
@@ -40,7 +40,7 @@ static void _dmaRead(AzState* state)
 
 static void _dmaWrite(AzState* state)
 {
-    puts("SP DMA (Write)");
+    //puts("SP DMA (Write)");
 }
 
 uint32_t azRspControlRead(AzState* state, uint8_t creg)
@@ -143,7 +143,7 @@ void azRspControlWrite(AzState* state, uint8_t creg, uint32_t value)
             if (!(state->rsp.cregs[RSP_CREG_SP_STATUS] & 0x01))
             {
                 getchar();
-                azRunRSP(state);
+                azWorkerStart(&state->rspWorker);
             }
         }
         break;
@@ -175,7 +175,7 @@ void azRspControlWrite(AzState* state, uint8_t creg, uint32_t value)
 
 uint32_t azRcpReadSP(AzState* state, uint32_t addr)
 {
-    printf("SP Read:  0x%08x\n", addr);
+    //printf("SP Read:  0x%08x\n", addr);
     switch (addr)
     {
     case SP_MEM_ADDR_REG:
@@ -197,7 +197,7 @@ uint32_t azRcpReadSP(AzState* state, uint32_t addr)
 
 void azRcpWriteSP(AzState* state, uint32_t addr, uint32_t value)
 {
-    printf("SP Write: 0x%08x (0x%08x)\n", addr, value);
+    //printf("SP Write: 0x%08x (0x%08x)\n", addr, value);
     switch (addr)
     {
     case SP_MEM_ADDR_REG:

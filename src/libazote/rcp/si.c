@@ -15,7 +15,7 @@ static void _dmaWritePIF(AzState* state)
 
 uint32_t azRcpReadSI(AzState* state, uint32_t addr)
 {
-    printf("SI Read:  0x%08x\n", addr);
+    //printf("SI Read:  0x%08x\n", addr);
     switch (addr)
     {
     case SI_DRAM_ADDR_REG:
@@ -33,7 +33,7 @@ uint32_t azRcpReadSI(AzState* state, uint32_t addr)
 
 void azRcpWriteSI(AzState* state, uint32_t addr, uint32_t value)
 {
-    printf("SI Write: 0x%08x (0x%08x)\n", addr, value);
+    //printf("SI Write: 0x%08x (0x%08x)\n", addr, value);
     switch (addr)
     {
     case SI_DRAM_ADDR_REG:

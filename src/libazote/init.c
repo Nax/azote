@@ -2,6 +2,12 @@
 
 #define zalloc(x)   calloc((x), 1)
 
+static void initWorker(AzWorker* worker)
+{
+    pthread_cond_init(&worker->cond, NULL);
+    pthread_mutex_init(&worker->mutex, NULL);
+}
+
 AzState* azInit()
 {
     AzState* state;
@@ -19,6 +25,11 @@ AzState* azInit()
     state->riRegisters = zalloc(0x20);
     state->siRegisters = zalloc(0x1c);
     state->pifram = zalloc(0x40);
+
+    initWorker(&state->cpuWorker);
+    initWorker(&state->rspWorker);
+    pthread_create(&state->cpuWorker.thread, NULL, &azCpuWorkerMain, state);
+    pthread_create(&state->rspWorker.thread, NULL, &azRspWorkerMain, state);
 
     return state;
 }
@@ -41,4 +52,13 @@ void azExit(AzState* state)
         free(state->pifram);
     }
     free(state);
+}
+
+void azRun(AzState* state)
+{
+    azWorkerStart(&state->cpuWorker);
+
+    for (;;)
+    {
+    }
 }

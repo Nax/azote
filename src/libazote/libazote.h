@@ -3,6 +3,7 @@
 
 /* This file is the private libazote header */
 
+#include <pthread.h>
 #include <stdint.h>
 #include <string.h>
 #include <stdlib.h>
@@ -282,6 +283,9 @@ void        azRcpWriteAI(AzState* state, uint32_t addr, uint32_t value);
 void        azRcpWriteVI(AzState* state, uint32_t addr, uint32_t value);
 void        azRcpWriteSI(AzState* state, uint32_t addr, uint32_t value);
 
+void* azCpuWorkerMain(void*);
+void* azRspWorkerMain(void*);
+
 typedef _Atomic uint32_t atomic_u32;
 
 typedef struct AzCOP0_  AzCOP0;
@@ -344,7 +348,20 @@ struct AzTLB_ {
     uint64_t    mask[32];
 };
 
+typedef struct {
+    pthread_t       thread;
+    _Atomic int     enabled;
+    _Atomic int     enabledFeedback;
+    pthread_cond_t  cond;
+    pthread_cond_t  condFeedback;
+    pthread_mutex_t mutex;
+    pthread_mutex_t mutexFeedback;
+} AzWorker;
+
 struct AzState_ {
+    AzWorker    cpuWorker;
+    AzWorker    rspWorker;
+
     AzCPU       cpu;
     AzCoreRSP   rsp;
     AzCOP0      cop0;
@@ -366,5 +383,9 @@ struct AzState_ {
     unsigned    debug:1;
     unsigned    verbose:1;
 };
+
+void azWorkerBarrier(AzWorker* worker);
+void azWorkerStart(AzWorker* worker);
+void azWorkerStop(AzWorker* worker);
 
 #endif

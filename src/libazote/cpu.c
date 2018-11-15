@@ -436,7 +436,6 @@ static void _runCycles(AzState* state, uint32_t cycles)
                     // TRAP;
                     break;
                 case OP_CP0_ERET:
-                    printf("ERET\n");
                     if (state->cop0.registers[COP0_REG_STATUS] & 0x04)
                     {
                         pc = state->cop0.registers[COP0_REG_ERROR_EPC];
@@ -804,7 +803,6 @@ static void _runCycles(AzState* state, uint32_t cycles)
         tmp2 &= ((tmp >> 8) & 0xff);
         if (tmp2)
         {
-            printf("INTERRUPT\n");
             int bd = (pc2 != pc + 4);
             state->cop0.registers[COP0_REG_STATUS] |= 0x02;
             state->cop0.registers[COP0_REG_EPC] = pc;
@@ -827,8 +825,10 @@ static inline uint64_t _getTimeNano()
     return clock_gettime_nsec_np(CLOCK_UPTIME_RAW);
 }
 
-void azRun(AzState* state)
+void* azCpuWorkerMain(void* s)
 {
+    AzState* state = (AzState*)s;
+
     static const uint32_t granularity = 4096;
     static const uint64_t kPeriod = 16666666;
     uint64_t now;
@@ -840,8 +840,10 @@ void azRun(AzState* state)
     cycles = 0;
     referenceTime = _getTimeNano();
     baseTime = _getTimeNano();
+
     for (;;)
     {
+        azWorkerBarrier(&state->cpuWorker);
         _runCycles(state, granularity);
         cycles += granularity;
         now = _getTimeNano();

@@ -611,8 +611,10 @@ static inline uint64_t _getTimeNano()
     return clock_gettime_nsec_np(CLOCK_UPTIME_RAW);
 }
 
-void azRunRSP(AzState* state)
+void* azRspWorkerMain(void* s)
 {
+    AzState* state = (AzState*)s;
+
     static const uint32_t granularity = 1024;
     uint64_t now;
     uint64_t baseTime;
@@ -622,6 +624,7 @@ void azRunRSP(AzState* state)
     baseTime = _getTimeNano();
     for (;;)
     {
+        azWorkerBarrier(&state->rspWorker);
         _runCycles(state, granularity);
         cycles += granularity;
         now = _getTimeNano();
