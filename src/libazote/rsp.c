@@ -201,7 +201,18 @@ static void _runCycles(AzState* state, uint32_t cycles)
             }
             break;
         case OP_COP2:
-            TRAP;
+            switch (RS)
+            {
+            default:
+                TRAP;
+                break;
+            case OP_COP_MT:
+                state->rsp.vregs[RD].u16[7 - (VE / 2)] = (regs[RT] & 0xffff);
+                break;
+            case OP_COP_MF:
+                regs[RT] = (int32_t)((int16_t)state->rsp.vregs[RD].u16[7 - (VE / 2)]);
+                break;
+            }
             break;
         case OP_LB:
             if (RT) regs[RT] = (int32_t)(*(int8_t*)(state->spDmem + ((regs[RS] + SIMM) & 0xfff)));
@@ -283,13 +294,13 @@ static void _runCycles(AzState* state, uint32_t cycles)
                 *(uint8_t*)(state->spDmem + (regs[RS] & 0xfff) + VOFF) = state->rsp.vregs[RT].u8[15 - VE];
                 break;
             case OP_SWC2_SSV:
-                *(uint16_t*)(state->spDmem + (regs[RS] & 0xfff) + (VOFF << 1)) = bswap16(state->rsp.vregs[RT].u16[7 - (VE / 8)]);
+                *(uint16_t*)(state->spDmem + (regs[RS] & 0xfff) + (VOFF << 1)) = bswap16(state->rsp.vregs[RT].u16[7 - (VE / 2)]);
                 break;
             case OP_SWC2_SLV:
                 *(uint32_t*)(state->spDmem + (regs[RS] & 0xfff) + (VOFF << 2)) = bswap32(state->rsp.vregs[RT].u32[3 - (VE / 4)]);
                 break;
             case OP_SWC2_SDV:
-                *(uint64_t*)(state->spDmem + (regs[RS] & 0xfff) + (VOFF << 3)) = bswap64(state->rsp.vregs[RT].u64[1 - (VE / 2)]);
+                *(uint64_t*)(state->spDmem + (regs[RS] & 0xfff) + (VOFF << 3)) = bswap64(state->rsp.vregs[RT].u64[1 - (VE / 8)]);
                 break;
             case OP_SWC2_SQV:
                 TRAP;
