@@ -304,6 +304,7 @@ typedef union {
     uint64_t    u64[2];
     float       f[4];
     double      d[2];
+    __m128i     vi;
 } AzVReg;
 
 typedef struct {
@@ -321,6 +322,9 @@ typedef struct {
     uint32_t    registers[32];
     atomic_u32  cregs[16];
     AzVReg      vregs[32];
+    AzVReg      vacc_hi;
+    AzVReg      vacc_md;
+    AzVReg      vacc_lo;
 } AzCoreRSP;
 
 struct AzCOP0_ {

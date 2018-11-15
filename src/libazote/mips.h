@@ -246,8 +246,12 @@
 #define FS      RD
 #define FD      SA
 
+#define VT      RT
+#define VS      RD
+#define VD      SA
 #define VE      ((op >> 7) & 0xf)
 #define VOFF    (op & 0x7f)
+#define E       ((op >> 21) & 0xf)
 
 #define IMM     ((uint64_t)(op & 0xffff))
 #define SIMM    ((int64_t)((int16_t)(op & 0xffff)))

@@ -16,6 +16,50 @@ static void* bswapCopy128(void* restrict dst, uint8_t base, void* restrict src, 
     return cDst;
 }
 
+static __m128i vLoad(AzState* state, uint8_t r)
+{
+    return _mm_load_si128((__m128i*)&state->rsp.vregs[r]);
+}
+
+static __m128i vLoadE(AzState* state, uint8_t r, uint8_t e)
+{
+
+    switch (e)
+    {
+    case 0x00:
+        return _mm_load_si128((__m128i*)&state->rsp.vregs[r]);
+    case 0x02:
+        return _mm_set1_epi64x(state->rsp.vregs[r].u64[1]);
+    case 0x03:
+        return _mm_set1_epi64x(state->rsp.vregs[r].u64[0]);
+    case 0x04:
+        return _mm_set1_epi32(state->rsp.vregs[r].u32[3]);
+    case 0x05:
+        return _mm_set1_epi32(state->rsp.vregs[r].u32[2]);
+    case 0x06:
+        return _mm_set1_epi32(state->rsp.vregs[r].u32[1]);
+    case 0x07:
+        return _mm_set1_epi32(state->rsp.vregs[r].u32[0]);
+    case 0x08:
+        return _mm_set1_epi16(state->rsp.vregs[r].u16[7]);
+    case 0x09:
+        return _mm_set1_epi16(state->rsp.vregs[r].u16[6]);
+    case 0x0a:
+        return _mm_set1_epi16(state->rsp.vregs[r].u16[5]);
+    case 0x0b:
+        return _mm_set1_epi16(state->rsp.vregs[r].u16[4]);
+    case 0x0c:
+        return _mm_set1_epi16(state->rsp.vregs[r].u16[3]);
+    case 0x0d:
+        return _mm_set1_epi16(state->rsp.vregs[r].u16[2]);
+    case 0x0e:
+        return _mm_set1_epi16(state->rsp.vregs[r].u16[1]);
+    case 0x0f:
+        return _mm_set1_epi16(state->rsp.vregs[r].u16[0]);
+    }
+    __builtin_unreachable();
+}
+
 static void _runCycles(AzState* state, uint32_t cycles)
 {
     uint32_t op;
@@ -23,10 +67,20 @@ static void _runCycles(AzState* state, uint32_t cycles)
     uint16_t pc2;
     uint32_t tmp;
     uint32_t* regs;
+    __m128i a;
+    __m128i b;
+    __m128i c;
+    __m128i acc_hi;
+    __m128i acc_md;
+    __m128i acc_lo;
 
     regs = state->rsp.registers;
     pc = state->rsp.pc;
     pc2 = state->rsp.pc2;
+
+    acc_hi = _mm_load_si128(&state->rsp.vacc_hi.vi);
+    acc_md = _mm_load_si128(&state->rsp.vacc_md.vi);
+    acc_lo = _mm_load_si128(&state->rsp.vacc_lo.vi);
 
     for (uint32_t i = 0; i < cycles; ++i)
     {
@@ -234,7 +288,8 @@ static void _runCycles(AzState* state, uint32_t cycles)
                     TRAP;
                     break;
                 case OP_CP2_VMULF:
-                    TRAP;
+                    a = vLoad(state, VT);
+                    b = vLoadE(state, VS, E);
                     break;
                 case OP_CP2_VMULU:
                     TRAP;
@@ -485,6 +540,10 @@ static void _runCycles(AzState* state, uint32_t cycles)
             break;
         }
     }
+
+    _mm_store_si128(&state->rsp.vacc_hi.vi, acc_hi);
+    _mm_store_si128(&state->rsp.vacc_md.vi, acc_md);
+    _mm_store_si128(&state->rsp.vacc_lo.vi, acc_lo);
 
     state->rsp.pc = pc;
     state->rsp.pc2 = pc2;
