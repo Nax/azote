@@ -73,8 +73,9 @@ static __m128i vLoadE(AzState* state, uint8_t r, uint8_t e)
     __builtin_unreachable();
 }
 
-static void _runCycles(AzState* state, uint32_t cycles)
+static uint32_t _runCycles(AzState* state, uint32_t cycles)
 {
+    uint32_t i;
     uint32_t op;
     uint16_t pc;
     uint16_t pc2;
@@ -98,7 +99,7 @@ static void _runCycles(AzState* state, uint32_t cycles)
     acc_md = _mm_load_si128(&state->rsp.vacc_md.vi);
     acc_lo = _mm_load_si128(&state->rsp.vacc_lo.vi);
 
-    for (uint32_t i = 0; i < cycles; ++i)
+    for (i = 0; i < cycles; ++i)
     {
         op = bswap32(*(uint32_t*)(state->spImem + (pc & 0xfff)));
         pc = pc2 & 0xfff;
@@ -141,8 +142,8 @@ static void _runCycles(AzState* state, uint32_t cycles)
                 regs[31] = pc + 4;
                 break;
             case OP_SPECIAL_BREAK:
-                printf("RSP BREAK\n");
-                getchar();
+                //printf("RSP BREAK\n");
+                state->rspWorker.enabled = 0;
                 state->rsp.cregs[RSP_CREG_SP_STATUS] |= 0x03;
                 if (state->rsp.cregs[RSP_CREG_SP_STATUS] & 0x40)
                     azRcpRaiseInterrupt(state, RCP_INTR_SP);
@@ -604,6 +605,8 @@ end:
 
     state->rsp.pc = pc;
     state->rsp.pc2 = pc2;
+
+    return i;
 }
 
 static inline uint64_t _getTimeNano()
@@ -616,26 +619,29 @@ void* azRspWorkerMain(void* s)
     AzState* state = (AzState*)s;
 
     static const uint32_t granularity = 1024;
-    uint64_t now;
-    uint64_t baseTime;
+    uint64_t timeLastReport;
+    uint64_t timeBefore;
+    uint64_t timeNow;
+    uint64_t duration;
     uint64_t cycles;
 
     cycles = 0;
-    baseTime = _getTimeNano();
+    duration = 0;
+    timeLastReport = _getTimeNano();
     for (;;)
     {
         azWorkerBarrier(&state->rspWorker);
-        _runCycles(state, granularity);
-        cycles += granularity;
-        now = _getTimeNano();
-        if ((now - baseTime) >= 1000000000)
+        timeBefore = _getTimeNano();
+        cycles += _runCycles(state, granularity);
+        timeNow = _getTimeNano();
+        duration += timeNow - timeBefore;
+        if ((timeNow - timeLastReport) >= 1000000000)
         {
-            double instrPerSecond = (double)cycles / ((double)(now - baseTime) * 1e-9);
+            double instrPerSecond = (double)cycles / ((double)duration * 1e-9);
             printf("RSP Vi/s: %.2fM   (PC: 0x%04x)\n", instrPerSecond / 1000000, state->rsp.pc);
-            baseTime = now;
+            duration = 0;
             cycles = 0;
+            timeLastReport = timeNow;
         }
-        if (state->rsp.cregs[RSP_CREG_SP_STATUS] & 0x01)
-            return;
     }
 }

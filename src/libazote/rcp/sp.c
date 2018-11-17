@@ -35,7 +35,7 @@ static void _dmaRead(AzState* state)
         for (size_t i = 0; i < count; ++i)
             memcpy(dst + i * length, src + i * (length + skip), length);
     }
-    printf("0x%08x <- 0x%08x (Length: %u, Count: %u, Skip: %u)\n", spAddr, ramAddr, length, count, skip);
+    //printf("0x%08x <- 0x%08x (Length: %u, Count: %u, Skip: %u)\n", spAddr, ramAddr, length, count, skip);
 }
 
 static void _dmaWrite(AzState* state)
@@ -139,10 +139,9 @@ void azRspControlWrite(AzState* state, uint8_t creg, uint32_t value)
 
         if ((state->rsp.cregs[RSP_CREG_SP_STATUS] & 0x01) != (tmp & 0x01))
         {
-            printf("RSP: %s\n", (state->rsp.cregs[RSP_CREG_SP_STATUS] & 0x01) ? "HALT" : "RUN");
+            //printf("RSP: %s\n", (state->rsp.cregs[RSP_CREG_SP_STATUS] & 0x01) ? "HALT" : "RUN");
             if (!(state->rsp.cregs[RSP_CREG_SP_STATUS] & 0x01))
             {
-                getchar();
                 azWorkerStart(&state->rspWorker);
             }
         }

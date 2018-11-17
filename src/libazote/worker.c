@@ -1,6 +1,6 @@
 #include <libazote/libazote.h>
 
-void azWorkerBarrier(AzWorker* worker)
+int azWorkerBarrier(AzWorker* worker)
 {
     if (!worker->enabled)
     {
@@ -20,7 +20,9 @@ void azWorkerBarrier(AzWorker* worker)
             worker->enabledFeedback = 1;
         }
         pthread_mutex_unlock(&worker->mutex);
+        return 1;
     }
+    return 0;
 }
 
 void azWorkerStart(AzWorker* worker)

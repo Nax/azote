@@ -384,7 +384,7 @@ struct AzState_ {
     unsigned    verbose:1;
 };
 
-void azWorkerBarrier(AzWorker* worker);
+int  azWorkerBarrier(AzWorker* worker);
 void azWorkerStart(AzWorker* worker);
 void azWorkerStop(AzWorker* worker);
 
