@@ -299,8 +299,8 @@ static void _runCycles(AzState* state, uint32_t cycles)
                     b = vLoadE(state, VS, E);
                     hi = _mm_mulhi_epi16(a, b);
                     lo = _mm_mullo_epi16(a, b);
-                    acc_hi = _mm_slli_epi16(hi, 1);
-                    acc_md = _mm_slli_epi16(lo, 1);
+                    acc_hi = _mm_or_si128(_mm_slli_epi16(hi, 1), _mm_srli_epi16(lo, 15));
+                    acc_lo = _mm_slli_epi16(lo, 1);
                     c = _mm_srli_epi16(acc_lo, 15);
                     acc_lo = _mm_add_epi16(acc_lo, _mm_set1_epi16(0x8000));
                     d = _mm_srli_epi16(_mm_cmpeq_epi16(acc_md, _mm_set1_epi16(0xffff)), 15);
@@ -315,8 +315,8 @@ static void _runCycles(AzState* state, uint32_t cycles)
                     b = vLoadE(state, VS, E);
                     hi = _mm_mulhi_epu16(a, b);
                     lo = _mm_mullo_epi16(a, b);
-                    acc_hi = _mm_slli_epi16(hi, 1);
-                    acc_md = _mm_slli_epi16(lo, 1);
+                    acc_hi = _mm_or_si128(_mm_slli_epi16(hi, 1), _mm_srli_epi16(lo, 15));
+                    acc_lo = _mm_slli_epi16(lo, 1);
                     c = _mm_srli_epi16(acc_lo, 15);
                     acc_lo = _mm_add_epi16(acc_lo, _mm_set1_epi16(0x8000));
                     d = _mm_srli_epi16(_mm_cmpeq_epi16(acc_md, _mm_set1_epi16(0xffff)), 15);
