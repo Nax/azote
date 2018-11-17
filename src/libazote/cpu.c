@@ -836,6 +836,7 @@ void* azCpuWorkerMain(void* s)
     uint64_t baseTime;
     uint64_t dt;
     uint64_t cycles;
+    int intCount = 0;
 
     cycles = 0;
     referenceTime = _getTimeNano();
@@ -848,8 +849,9 @@ void* azCpuWorkerMain(void* s)
         cycles += granularity;
         now = _getTimeNano();
         dt = now - referenceTime;
-        if (dt >= kPeriod)
+        if (dt >= kPeriod && intCount < 256)
         {
+            intCount++;
             referenceTime += kPeriod;
             azRcpRaiseInterrupt(state, RCP_INTR_VI);
         }

@@ -40,7 +40,38 @@ static void _dmaRead(AzState* state)
 
 static void _dmaWrite(AzState* state)
 {
+    char* src;
+    char* dst;
+    uint32_t pack;
+    uint32_t length;
+    uint32_t count;
+    uint32_t skip;
+    uint32_t ramAddr;
+    uint32_t spAddr;
+
     //puts("SP DMA (Write)");
+    pack = state->rsp.cregs[RSP_CREG_DMA_READ_LENGTH];
+    length = ((pack & 0xfff) | 0x7) + 1;
+    count = ((pack >> 12) & 0xff) + 1;
+    skip = (pack >> 20) & 0xfff;
+
+    spAddr = state->rsp.cregs[RSP_CREG_DMA_CACHE] & 0x1fff;
+    ramAddr = state->rsp.cregs[RSP_CREG_DMA_DRAM] & 0xffffff;
+
+    if (spAddr & 0x1000)
+        src = state->spImem + (spAddr & 0xfff);
+    else
+        src = state->spDmem + spAddr;
+    dst = state->rdram + ramAddr;
+
+    if (skip == 0)
+        memcpy(dst, src, length * count);
+    else
+    {
+        for (size_t i = 0; i < count; ++i)
+            memcpy(dst + i * length, src + i * (length + skip), length);
+    }
+    //printf("0x%08x -> 0x%08x (Length: %u, Count: %u, Skip: %u)\n", spAddr, ramAddr, length, count, skip);
 }
 
 uint32_t azRspControlRead(AzState* state, uint8_t creg)
@@ -92,6 +123,7 @@ void azRspControlWrite(AzState* state, uint8_t creg, uint32_t value)
 {
     uint32_t tmp;
 
+    printf("SP Write: 0x%02x\n", creg);
     switch (creg & 0x0f)
     {
     case RSP_CREG_DMA_CACHE:
@@ -154,12 +186,20 @@ void azRspControlWrite(AzState* state, uint8_t creg, uint32_t value)
         state->rsp.cregs[RSP_CREG_SP_RESERVED] = 0;
         break;
     case RSP_CREG_CMD_START:
+        printf("CMD START: 0x%08x\n", value);
+        getchar();
         break;
     case RSP_CREG_CMD_END:
+        printf("CMD END: 0x%08x\n", value);
+        getchar();
         break;
     case RSP_CREG_CMD_CURRENT:
+        printf("CMD CURRENT: 0x%08x\n", value);
+        getchar();
         break;
     case RSP_CREG_CMD_STATUS:
+        printf("CMD STATUS: 0x%08x\n", value);
+        getchar();
         break;
     case RSP_CREG_CMD_CLOCK:
         break;
@@ -189,6 +229,14 @@ uint32_t azRcpReadSP(AzState* state, uint32_t addr)
         return azRspControlRead(state, RSP_CREG_SP_STATUS);
     case SP_PC_REG:
         return state->rsp.pc & 0xfff;
+    case SP_CMD_START:
+        return azRspControlRead(state, RSP_CREG_CMD_START);
+    case SP_CMD_END:
+        return azRspControlRead(state, RSP_CREG_CMD_END);
+    case SP_CMD_CURRENT:
+        return azRspControlRead(state, RSP_CREG_CMD_CURRENT);
+    case SP_CMD_STATUS:
+        return azRspControlRead(state, RSP_CREG_CMD_STATUS);
     default:
         return 0;
     }
@@ -213,6 +261,18 @@ void azRcpWriteSP(AzState* state, uint32_t addr, uint32_t value)
         return;
     case SP_STATUS_REG:
         azRspControlWrite(state, RSP_CREG_SP_STATUS, value);
+        return;
+    case SP_CMD_START:
+        azRspControlWrite(state, RSP_CREG_CMD_START, value);
+        return;
+    case SP_CMD_END:
+        azRspControlWrite(state, RSP_CREG_CMD_END, value);
+        return;
+    case SP_CMD_CURRENT:
+        azRspControlWrite(state, RSP_CREG_CMD_CURRENT, value);
+        return;
+    case SP_CMD_STATUS:
+        azRspControlWrite(state, RSP_CREG_CMD_STATUS, value);
         return;
     case SP_PC_REG:
         state->rsp.pc = value & 0xfff;

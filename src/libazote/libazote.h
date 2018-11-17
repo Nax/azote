@@ -11,6 +11,8 @@
 #include <x86intrin.h>
 #include <azote/azote.h>
 
+uint32_t azCRC32(void* data, size_t len);
+
 inline static uint8_t bswap8(uint8_t in)
 {
     return in;
@@ -143,6 +145,15 @@ void azMemoryWrite64(AzState* state, uint64_t addr, uint64_t value);
 
 void azRunRSP(AzState* state);
 
+#define CIC_UNKNOWN     0
+#define CIC_6101        1
+#define CIC_6102        2
+#define CIC_6103        3
+#define CIC_6105        4
+#define CIC_6106        5
+
+int azRomGetCIC(void* cart);
+
 /* COP0 */
 #define COP0_REG_INDEX          0
 #define COP0_REG_RANDOM         1
@@ -216,6 +227,10 @@ void azRunRSP(AzState* state);
 #define SP_DMA_FULL_REG     0x04040014
 #define SP_DMA_BUSY_REG     0x04040018
 #define SP_SEMAPHORE_REG    0x0404001c
+#define SP_CMD_START        0x04100000
+#define SP_CMD_END          0x04100004
+#define SP_CMD_CURRENT      0x04100008
+#define SP_CMD_STATUS       0x0410000c
 #define SP_PC_REG           0x04080000
 #define SP_IBIST_REG        0x04080004
 

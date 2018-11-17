@@ -29,7 +29,8 @@ type x(AzState* state, uint64_t vaddr)                                  \
     else if (addr >= 0x04001000 && addr < 0x04002000)                   \
         res = swap(*(type*)(state->spImem + (addr & 0xfff)));           \
     else if ((addr >= 0x04040000 && addr < 0x04040020)                  \
-        || (addr >= 0x04080000 && addr < 0x04080008))                   \
+        || (addr >= 0x04080000 && addr < 0x04080008)                    \
+        || (addr >= 0x04100000 && addr < 0x04100020))                   \
         res = azRcpReadSP(state, addr);                                 \
     else if (addr >= 0x04300000 && addr < 0x04300010)                   \
         res = azRcpReadMI(state, addr);                                 \
