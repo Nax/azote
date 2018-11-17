@@ -90,6 +90,8 @@ uint32_t azRspControlRead(AzState* state, uint8_t creg)
 
 void azRspControlWrite(AzState* state, uint8_t creg, uint32_t value)
 {
+    uint32_t tmp;
+
     switch (creg & 0x0f)
     {
     case RSP_CREG_DMA_CACHE:
@@ -107,6 +109,8 @@ void azRspControlWrite(AzState* state, uint8_t creg, uint32_t value)
         _dmaWrite(state);
         break;
     case RSP_CREG_SP_STATUS:
+        tmp = state->rsp.cregs[RSP_CREG_SP_STATUS];
+
         if (value & 0x00000001) state->rsp.cregs[RSP_CREG_SP_STATUS] &= ~(0x0001);              // clear halt
         else if (value & 0x00000002) state->rsp.cregs[RSP_CREG_SP_STATUS] |= 0x0001;            // set halt
         if (value & 0x00000004) state->rsp.cregs[RSP_CREG_SP_STATUS] &= ~(0x0002);              // clear broke
@@ -132,11 +136,15 @@ void azRspControlWrite(AzState* state, uint8_t creg, uint32_t value)
         else if (value & 0x00400000) state->rsp.cregs[RSP_CREG_SP_STATUS] |= 0x2000;            // set signal 6
         if (value & 0x00800000) state->rsp.cregs[RSP_CREG_SP_STATUS] &= ~(0x4000);              // clear signal 7
         else if (value & 0x01000000) state->rsp.cregs[RSP_CREG_SP_STATUS] |= 0x4000;            // set signal 7
-        printf("RSP: %s\n", (state->rsp.cregs[RSP_CREG_SP_STATUS] & 0x01) ? "HALT" : "RUN");
-        if (!(state->rsp.cregs[RSP_CREG_SP_STATUS] & 0x01))
+
+        if ((state->rsp.cregs[RSP_CREG_SP_STATUS] & 0x01) != (tmp & 0x01))
         {
-            getchar();
-            azRunRSP(state);
+            printf("RSP: %s\n", (state->rsp.cregs[RSP_CREG_SP_STATUS] & 0x01) ? "HALT" : "RUN");
+            if (!(state->rsp.cregs[RSP_CREG_SP_STATUS] & 0x01))
+            {
+                getchar();
+                azRunRSP(state);
+            }
         }
         break;
     case RSP_CREG_DMA_FULL:

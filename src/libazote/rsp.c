@@ -7,12 +7,21 @@
 
 #define TRAP    do { printf("RSP TRAP at 0x%04x    OP: 0x%08x\n", pc, op); getchar(); } while (0)
 
-static void* bswapCopy128(void* restrict dst, uint8_t base, void* restrict src, size_t len)
+static void* bswapLoad128(void* restrict dst, uint8_t base, void* restrict src, size_t len)
 {
     char* cDst = (char*)dst;
     char* cSrc = (char*)src;
     for (size_t i = 0; i < len; ++i)
         cDst[15 - base - i] = cSrc[i];
+    return cDst;
+}
+
+static void* bswapStore128(void* restrict dst, uint8_t base, void* restrict src, size_t len)
+{
+    char* cDst = (char*)dst;
+    char* cSrc = (char*)src;
+    for (size_t i = 0; i < len; ++i)
+        cDst[i] = cSrc[15 - base - i];
     return cDst;
 }
 
@@ -133,7 +142,11 @@ static void _runCycles(AzState* state, uint32_t cycles)
                 break;
             case OP_SPECIAL_BREAK:
                 printf("RSP BREAK\n");
-                TRAP;
+                getchar();
+                state->rsp.cregs[RSP_CREG_SP_STATUS] |= 0x03;
+                if (state->rsp.cregs[RSP_CREG_SP_STATUS] & 0x40)
+                    azRcpRaiseInterrupt(state, RCP_INTR_SP);
+                goto end;
                 break;
             case OP_SPECIAL_ADD:
             case OP_SPECIAL_ADDU:
@@ -300,7 +313,7 @@ static void _runCycles(AzState* state, uint32_t cycles)
                     hi = _mm_mulhi_epi16(a, b);
                     lo = _mm_mullo_epi16(a, b);
                     acc_hi = _mm_or_si128(_mm_slli_epi16(hi, 1), _mm_srli_epi16(lo, 15));
-                    acc_lo = _mm_slli_epi16(lo, 1);
+                    acc_md = _mm_slli_epi16(lo, 1);
                     c = _mm_srli_epi16(acc_lo, 15);
                     acc_lo = _mm_add_epi16(acc_lo, _mm_set1_epi16(0x8000));
                     d = _mm_srli_epi16(_mm_cmpeq_epi16(acc_md, _mm_set1_epi16(0xffff)), 15);
@@ -316,7 +329,7 @@ static void _runCycles(AzState* state, uint32_t cycles)
                     hi = _mm_mulhi_epu16(a, b);
                     lo = _mm_mullo_epi16(a, b);
                     acc_hi = _mm_or_si128(_mm_slli_epi16(hi, 1), _mm_srli_epi16(lo, 15));
-                    acc_lo = _mm_slli_epi16(lo, 1);
+                    acc_md = _mm_slli_epi16(lo, 1);
                     c = _mm_srli_epi16(acc_lo, 15);
                     acc_lo = _mm_add_epi16(acc_lo, _mm_set1_epi16(0x8000));
                     d = _mm_srli_epi16(_mm_cmpeq_epi16(acc_md, _mm_set1_epi16(0xffff)), 15);
@@ -344,7 +357,18 @@ static void _runCycles(AzState* state, uint32_t cycles)
                     TRAP;
                     break;
                 case OP_CP2_VMACF:
-                    TRAP;
+                    a = vLoad(state, VT);
+                    b = vLoadE(state, VS, E);
+                    hi = _mm_mulhi_epi16(a, b);
+                    lo = _mm_mullo_epi16(a, b);
+                    hi = _mm_or_si128(_mm_slli_epi16(hi, 1), _mm_srli_epi16(lo, 15));
+                    lo = _mm_slli_epi16(lo, 1);
+                    c = _mm_srli_epi16(_mm_and_si128(acc_md, lo), 15);
+                    acc_hi = _mm_add_epi16(_mm_add_epi16(acc_hi, hi), c);
+                    acc_md = _mm_add_epi16(acc_md, lo);
+                    c = _mm_unpacklo_epi16(acc_md, acc_hi);
+                    d = _mm_unpackhi_epi16(acc_md, acc_hi);
+                    vStore(state, VD, _mm_packs_epi32(c, d));
                     break;
                 case OP_CP2_VMACU:
                     TRAP;
@@ -502,11 +526,11 @@ static void _runCycles(AzState* state, uint32_t cycles)
                 break;
             case OP_LWC2_LQV:
                 tmp = (regs[RS] + VOFF) & 0xfff;
-                bswapCopy128(state->rsp.vregs[RT].u8, 0, state->spDmem + tmp, ((tmp - 1) % 16) + 1);
+                bswapLoad128(state->rsp.vregs[RT].u8, 0, state->spDmem + tmp, ((tmp - 1) % 16) + 1);
                 break;
             case OP_LWC2_LRV:
                 tmp = (regs[RS] + VOFF) & 0xfff;
-                bswapCopy128(state->rsp.vregs[RT].u8, tmp % 16, state->spDmem + (tmp & 0xff0), tmp % 16);
+                bswapLoad128(state->rsp.vregs[RT].u8, tmp % 16, state->spDmem + (tmp & 0xff0), tmp % 16);
                 break;
             case OP_LWC2_LPV:
                 TRAP;
@@ -544,7 +568,8 @@ static void _runCycles(AzState* state, uint32_t cycles)
                 *(uint64_t*)(state->spDmem + (regs[RS] & 0xfff) + (VOFF << 3)) = bswap64(state->rsp.vregs[RT].u64[1 - (VE / 8)]);
                 break;
             case OP_SWC2_SQV:
-                TRAP;
+                tmp = (regs[RS] + VOFF) & 0xfff;
+                bswapStore128(state->spDmem + tmp, 0, state->rsp.vregs[RT].u8, ((tmp - 1) % 16) + 1);
                 break;
             case OP_SWC2_SRV:
                 TRAP;
@@ -572,6 +597,7 @@ static void _runCycles(AzState* state, uint32_t cycles)
         }
     }
 
+end:
     _mm_store_si128(&state->rsp.vacc_hi.vi, acc_hi);
     _mm_store_si128(&state->rsp.vacc_md.vi, acc_md);
     _mm_store_si128(&state->rsp.vacc_lo.vi, acc_lo);
@@ -606,5 +632,7 @@ void azRunRSP(AzState* state)
             baseTime = now;
             cycles = 0;
         }
+        if (state->rsp.cregs[RSP_CREG_SP_STATUS] & 0x01)
+            return;
     }
 }

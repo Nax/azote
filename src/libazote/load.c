@@ -59,6 +59,8 @@ void azLoadFile(AzState* state, const char* path)
     state->piRegisters[7] = 0x12;
     state->piRegisters[8] = 0x40;
 
+    state->rsp.cregs[RSP_CREG_SP_STATUS] = 0x01;
+
     memcpy(state->spDmem, state->cart, 0x1000);
     azDebugDumpState(state);
 }
