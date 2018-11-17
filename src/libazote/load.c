@@ -53,21 +53,26 @@ void azLoadFile(AzState* state, const char* path)
     state->cpu.pc = 0xffffffffa4000040;
     state->cpu.pc2 = state->cpu.pc + 4;
 
-    state->cop0.registers[ 4] = 0x007ffff0;
-    state->cop0.registers[ 8] = 0xffffffff;
-    state->cop0.registers[ 9] = 0x5000;
-    state->cop0.registers[12] = 0x34000000;
-    state->cop0.registers[13] = 0x5c;
-    state->cop0.registers[14] = 0xffffffff;
-    state->cop0.registers[16] = 0x0006e463;
-    state->cop0.registers[30] = 0xffffffff;
+    state->cop0.registers[COP0_REG_CONTEXT] = 0x007ffff0;
+    state->cop0.registers[COP0_REG_BADVADDR] = 0xffffffff;
+    state->cop0.registers[COP0_REG_COUNT] = 0x5000;
+    state->cop0.registers[COP0_REG_STATUS] = 0x34000000;
+    state->cop0.registers[COP0_REG_CAUSE] = 0x5c;
+    state->cop0.registers[COP0_REG_EPC] = 0xffffffff;
+    state->cop0.registers[COP0_REG_CONFIG] = 0x0006e463;
+    state->cop0.registers[COP0_REG_ERROR_EPC] = 0xffffffff;
 
     state->piRegisters[5] = 0x80;
     state->piRegisters[6] = 0x37;
     state->piRegisters[7] = 0x12;
     state->piRegisters[8] = 0x40;
 
+    state->rsp.cregs[RSP_CREG_DMA_CACHE] = 0x00;
+    state->rsp.cregs[RSP_CREG_DMA_DRAM] = 0x00;
+    state->rsp.cregs[RSP_CREG_DMA_READ_LENGTH] = 0x00;
+    state->rsp.cregs[RSP_CREG_DMA_WRITE_LENGTH] = 0x00;
     state->rsp.cregs[RSP_CREG_SP_STATUS] = 0x01;
+    state->rsp.cregs[RSP_CREG_CMD_STATUS] = 0x98;
 
     memcpy(state->spDmem, state->cart, 0x1000);
 

@@ -7,8 +7,9 @@
 
 #define TRAP    do { printf("CPU TRAP at 0x%016llx    OP: 0x%08x\n", pc, op); getchar(); } while (0)
 
-static void _runCycles(AzState* state, uint32_t cycles)
+static uint32_t _runCycles(AzState* state, uint32_t cycles)
 {
+    uint32_t i;
     uint32_t op;
     uint64_t pc;
     uint64_t pc2;
@@ -25,7 +26,7 @@ static void _runCycles(AzState* state, uint32_t cycles)
     hi.u64 = state->cpu.hi;
     lo.u64 = state->cpu.lo;
 
-    for (uint32_t i = 0; i < cycles; ++i)
+    for (i = 0; i < cycles; ++i)
     {
         op = azMemoryRead32(state, pc);
         pc = pc2;
@@ -392,9 +393,23 @@ static void _runCycles(AzState* state, uint32_t cycles)
                 break;
             case OP_COP_MT:
                 state->cop0.registers[RD] = regs[RT].u64;
+                if (RD == COP0_REG_COMPARE)
+                {
+                    i = 0;
+                    state->cop0.registers[COP0_REG_CAUSE] &= ~(1 << 15);
+                    state->cop0.registers[COP0_REG_COUNT] = 0;
+                    goto end;
+                }
                 break;
             case OP_COP_DMT:
                 state->cop0.registers[RD] = regs[RT].u64;
+                if (RD == COP0_REG_COMPARE)
+                {
+                    i = 0;
+                    state->cop0.registers[COP0_REG_CAUSE] &= ~(1 << 15);
+                    state->cop0.registers[COP0_REG_COUNT] = 0;
+                    goto end;
+                }
                 break;
             case OP_COP_BC:
                 break;
@@ -477,6 +492,11 @@ static void _runCycles(AzState* state, uint32_t cycles)
                 state->cop1.registers[RD].u32 = regs[RT].u32;
                 break;
             case OP_COP_DMT:
+                if (RD == COP0_REG_COMPARE)
+                {
+                    printf("Compare: %d\n", regs[RT].u32);
+                    exit(62);
+                }
                 state->cop1.registers[RD].u64 = regs[RT].u64;
                 break;
             case OP_COP_CT:
@@ -813,11 +833,13 @@ static void _runCycles(AzState* state, uint32_t cycles)
         }
     }
 
+end:
     state->cpu.pc = pc;
     state->cpu.pc2 = pc2;
-    memcpy(state->cpu.registers, regs, 32 * sizeof(AzReg));
+    //memcpy(state->cpu.registers, regs, 32 * sizeof(AzReg));
     state->cpu.hi = hi.u64;
     state->cpu.lo = lo.u64;
+    return i;
 }
 
 static inline uint64_t _getTimeNano()
@@ -829,14 +851,14 @@ void* azCpuWorkerMain(void* s)
 {
     AzState* state = (AzState*)s;
 
-    static const uint32_t granularity = 4096;
-    static const uint64_t kPeriod = 16666666;
+    static const uint32_t granularity = 1024;
+    static const uint64_t kPeriod = 1666666600;
     uint64_t now;
     uint64_t referenceTime;
     uint64_t baseTime;
     uint64_t dt;
     uint64_t cycles;
-    int intCount = 0;
+    uint64_t slice;
 
     cycles = 0;
     referenceTime = _getTimeNano();
@@ -845,13 +867,26 @@ void* azCpuWorkerMain(void* s)
     for (;;)
     {
         azWorkerBarrier(&state->cpuWorker);
-        _runCycles(state, granularity);
-        cycles += granularity;
+        if (state->cop0.registers[COP0_REG_COMPARE] > state->cop0.registers[COP0_REG_COUNT]
+            && (state->cop0.registers[COP0_REG_COMPARE] - state->cop0.registers[COP0_REG_COUNT]) < granularity)
+        {
+            slice = _runCycles(state, state->cop0.registers[COP0_REG_COMPARE] - state->cop0.registers[COP0_REG_COUNT]);
+        }
+        else
+        {
+            slice = _runCycles(state, granularity);
+        }
+        cycles += slice;
+        state->cop0.registers[COP0_REG_COUNT] += slice;
+        if (state->cop0.registers[COP0_REG_COUNT] == state->cop0.registers[COP0_REG_COMPARE] && state->cop0.registers[COP0_REG_COUNT] != 0)
+        {
+            printf("CLOCK INT\n");
+            state->cop0.registers[COP0_REG_CAUSE] |= (1 << 15);
+        }
         now = _getTimeNano();
         dt = now - referenceTime;
-        if (dt >= kPeriod && intCount < 256)
+        if (dt >= kPeriod)
         {
-            intCount++;
             referenceTime += kPeriod;
             azRcpRaiseInterrupt(state, RCP_INTR_VI);
         }

@@ -142,7 +142,7 @@ static uint32_t _runCycles(AzState* state, uint32_t cycles)
                 regs[31] = pc + 4;
                 break;
             case OP_SPECIAL_BREAK:
-                //printf("RSP BREAK\n");
+                printf("RSP BREAK PC: 0x%04x OP: 0x%08x\n", pc, op);
                 state->rspWorker.enabled = 0;
                 state->rsp.cregs[RSP_CREG_SP_STATUS] |= 0x03;
                 if (state->rsp.cregs[RSP_CREG_SP_STATUS] & 0x40)
@@ -192,6 +192,9 @@ static uint32_t _runCycles(AzState* state, uint32_t cycles)
         case OP_REGIMM:
             switch (RT)
             {
+            default:
+                TRAP;
+                break;
             case OP_REGIMM_BLTZ:
                 if ((int32_t)regs[RS] < 0)
                     pc2 = pc + (SIMM << 2);
@@ -268,7 +271,8 @@ static uint32_t _runCycles(AzState* state, uint32_t cycles)
                 TRAP;
                 break;
             case OP_COP_MF:
-                if (RT) regs[RT] = azRspControlRead(state, RD);
+                tmp = azRspControlRead(state, RD);
+                if (RT) regs[RT] = tmp;
                 break;
             case OP_COP_MT:
                 azRspControlWrite(state, RD, regs[RT]);
@@ -503,9 +507,6 @@ static uint32_t _runCycles(AzState* state, uint32_t cycles)
             break;
         case OP_SW:
             *(uint32_t*)(state->spDmem + ((regs[RS] + SIMM) & 0xfff)) = bswap32(regs[RT]);
-            break;
-        case OP_CACHE:
-            TRAP;
             break;
         case OP_LWC2:
             switch (RD)

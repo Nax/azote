@@ -231,6 +231,10 @@ int azRomGetCIC(void* cart);
 #define SP_CMD_END          0x04100004
 #define SP_CMD_CURRENT      0x04100008
 #define SP_CMD_STATUS       0x0410000c
+#define SP_CMD_CLOCK        0x04100010
+#define SP_CMD_BUSY         0x04100014
+#define SP_CMD_PIPE_BUSY    0x04100018
+#define SP_CMD_TMEM_BUSY    0x0410001c
 #define SP_PC_REG           0x04080000
 #define SP_IBIST_REG        0x04080004
 
@@ -275,6 +279,7 @@ int azRomGetCIC(void* cart);
 #define SI_PIF_ADDR_WR64B_REG   0x04800010
 #define SI_STATUS_REG           0x04800018
 
+uint64_t    azCpuControlRead(AzState* state, uint8_t creg);
 uint32_t    azRspControlRead(AzState* state, uint8_t creg);
 void        azRspControlWrite(AzState* state, uint8_t creg, uint32_t value);
 
@@ -347,7 +352,7 @@ typedef struct {
 } AzCoreRSP;
 
 struct AzCOP0_ {
-    uint64_t    registers[32];
+    _Atomic uint64_t    registers[32];
 };
 
 struct AzCOP1_ {

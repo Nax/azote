@@ -3,7 +3,7 @@
 
 uint32_t azRcpReadMI(AzState* state, uint32_t addr)
 {
-    //printf("MI Read:  0x%08x\n", addr);
+    printf("MI Read:  0x%08x\n", addr);
     switch (addr)
     {
     case MI_INIT_MODE_REG:
@@ -20,7 +20,7 @@ uint32_t azRcpReadMI(AzState* state, uint32_t addr)
 
 void azRcpWriteMI(AzState* state, uint32_t addr, uint32_t value)
 {
-    //printf("MI Write: 0x%08x (0x%08x)\n", addr, value);
+    printf("MI Write: 0x%08x (0x%08x)\n", addr, value);
     switch (addr)
     {
     case MI_INIT_MODE_REG:

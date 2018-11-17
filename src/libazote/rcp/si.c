@@ -1,21 +1,23 @@
 #include <stdio.h>
 #include <libazote/libazote.h>
 
-static void _dmaReadPIF(AzState* state)
+static void _dmaRead(AzState* state)
 {
-    puts("PIF DMA Read");
+    puts("SI DMA Read");
+    azRcpRaiseInterrupt(state, RCP_INTR_SI);
     getchar();
 }
 
-static void _dmaWritePIF(AzState* state)
+static void _dmaWrite(AzState* state)
 {
-    puts("PIF DMA Write");
+    puts("SI DMA Write");
+    azRcpRaiseInterrupt(state, RCP_INTR_SI);
     getchar();
 }
 
 uint32_t azRcpReadSI(AzState* state, uint32_t addr)
 {
-    //printf("SI Read:  0x%08x\n", addr);
+    printf("SI Read:  0x%08x\n", addr);
     switch (addr)
     {
     case SI_DRAM_ADDR_REG:
@@ -33,17 +35,17 @@ uint32_t azRcpReadSI(AzState* state, uint32_t addr)
 
 void azRcpWriteSI(AzState* state, uint32_t addr, uint32_t value)
 {
-    //printf("SI Write: 0x%08x (0x%08x)\n", addr, value);
+    printf("SI Write: 0x%08x (0x%08x)\n", addr, value);
     switch (addr)
     {
     case SI_DRAM_ADDR_REG:
         state->siRegisters[0] = value;
         return;
     case SI_PIF_ADDR_RD64B_REG:
-        _dmaReadPIF(state);
+        _dmaRead(state);
         return;
     case SI_PIF_ADDR_WR64B_REG:
-        _dmaWritePIF(state);
+        _dmaWrite(state);
         return;
     case SI_STATUS_REG:
         azRcpClearInterrupt(state, RCP_INTR_SI);

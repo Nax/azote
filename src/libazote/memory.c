@@ -78,6 +78,7 @@ void x(AzState* state, uint64_t vaddr, type value)                      \
     else if (addr >= 0x04001000 && addr < 0x04002000)                   \
         *(type*)(state->spImem + (addr & 0xfff)) = swap(value);         \
     else if ((addr >= 0x04040000 && addr < 0x04040020)                  \
+        || (addr >= 0x04100000 && addr < 0x04100020)                    \
         || (addr >= 0x04080000 && addr < 0x04080008))                   \
         azRcpWriteSP(state, addr, value);                               \
     else if (addr >= 0x04300000 && addr < 0x04300010)                   \
