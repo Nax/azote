@@ -16,6 +16,11 @@ static void* bswapCopy128(void* restrict dst, uint8_t base, void* restrict src, 
     return cDst;
 }
 
+static void vStore(AzState* state, uint8_t r, __m128i value)
+{
+    _mm_store_si128(&state->rsp.vregs[r].vi, value);
+}
+
 static __m128i vLoad(AzState* state, uint8_t r)
 {
     return _mm_load_si128((__m128i*)&state->rsp.vregs[r]);
@@ -23,7 +28,6 @@ static __m128i vLoad(AzState* state, uint8_t r)
 
 static __m128i vLoadE(AzState* state, uint8_t r, uint8_t e)
 {
-
     switch (e)
     {
     case 0x00:
@@ -70,6 +74,9 @@ static void _runCycles(AzState* state, uint32_t cycles)
     __m128i a;
     __m128i b;
     __m128i c;
+    __m128i d;
+    __m128i hi;
+    __m128i lo;
     __m128i acc_hi;
     __m128i acc_md;
     __m128i acc_lo;
@@ -290,6 +297,18 @@ static void _runCycles(AzState* state, uint32_t cycles)
                 case OP_CP2_VMULF:
                     a = vLoad(state, VT);
                     b = vLoadE(state, VS, E);
+                    hi = _mm_mulhi_epi16(a, b);
+                    lo = _mm_mullo_epi16(a, b);
+                    acc_hi = _mm_slli_epi16(hi, 1);
+                    acc_md = _mm_slli_epi16(lo, 1);
+                    c = _mm_srli_epi16(acc_lo, 15);
+                    acc_lo = _mm_add_epi16(acc_lo, _mm_set1_epi16(0x8000));
+                    d = _mm_srli_epi16(_mm_cmpeq_epi16(acc_md, _mm_set1_epi16(0xffff)), 15);
+                    acc_md = _mm_add_epi16(acc_md, c);
+                    acc_hi = _mm_add_epi16(acc_hi, d);
+                    c = _mm_unpacklo_epi16(acc_md, acc_hi);
+                    d = _mm_unpackhi_epi16(acc_md, acc_hi);
+                    vStore(state, VD, _mm_packs_epi32(c, d));
                     break;
                 case OP_CP2_VMULU:
                     TRAP;
