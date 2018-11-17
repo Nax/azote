@@ -311,7 +311,19 @@ static void _runCycles(AzState* state, uint32_t cycles)
                     vStore(state, VD, _mm_packs_epi32(c, d));
                     break;
                 case OP_CP2_VMULU:
-                    TRAP;
+                    a = vLoad(state, VT);
+                    b = vLoadE(state, VS, E);
+                    hi = _mm_mulhi_epu16(a, b);
+                    lo = _mm_mullo_epi16(a, b);
+                    acc_hi = _mm_slli_epi16(hi, 1);
+                    acc_md = _mm_slli_epi16(lo, 1);
+                    c = _mm_srli_epi16(acc_lo, 15);
+                    acc_lo = _mm_add_epi16(acc_lo, _mm_set1_epi16(0x8000));
+                    d = _mm_srli_epi16(_mm_cmpeq_epi16(acc_md, _mm_set1_epi16(0xffff)), 15);
+                    acc_md = _mm_add_epi16(acc_md, c);
+                    acc_hi = _mm_add_epi16(acc_hi, d);
+                    c = _mm_xor_si128(_mm_cmpeq_epi16(acc_hi, _mm_setzero_si128()), _mm_setzero_si128());
+                    vStore(state, VD, _mm_adds_epu16(acc_md, c));
                     break;
                 case OP_CP2_VRNDP:
                     TRAP;
