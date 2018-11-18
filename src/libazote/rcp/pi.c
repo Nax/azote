@@ -7,11 +7,11 @@ static void _dmaRead(AzState* state)
     uint32_t ramAddr;
     uint32_t romAddr;
 
-    puts("DMA (Read)");
+    //puts("DMA (Read)");
     size = (uint64_t)state->piRegisters[3] + 1;
     ramAddr = state->piRegisters[0];
     romAddr = state->piRegisters[1];
-    printf("0x%08x -> 0x%08x (%llu bytes)\n", romAddr, ramAddr, size);
+    //printf("0x%08x -> 0x%08x (%llu bytes)\n", romAddr, ramAddr, size);
     //getchar();
     memcpy(state->rdram + ramAddr, state->cart + (romAddr & 0x0fffffff), size);
     azRcpRaiseInterrupt(state, RCP_INTR_PI);
@@ -23,11 +23,11 @@ static void _dmaWrite(AzState* state)
     uint32_t ramAddr;
     uint32_t romAddr;
 
-    puts("DMA (Write)");
+    ///puts("DMA (Write)");
     size = (uint64_t)state->piRegisters[3] + 1;
     ramAddr = state->piRegisters[0];
     romAddr = state->piRegisters[1];
-    printf("0x%08x -> 0x%08x (%llu bytes)\n", romAddr, ramAddr, size);
+    //printf("0x%08x -> 0x%08x (%llu bytes)\n", romAddr, ramAddr, size);
     //getchar();
     memcpy(state->rdram + ramAddr, state->cart + (romAddr & 0x0fffffff), size);
     azRcpRaiseInterrupt(state, RCP_INTR_PI);
@@ -35,7 +35,7 @@ static void _dmaWrite(AzState* state)
 
 uint32_t azRcpReadPI(AzState* state, uint32_t addr)
 {
-    printf("PI Read:  0x%08x\n", addr);
+    //printf("PI Read:  0x%08x\n", addr);
     switch (addr)
     {
     case PI_DRAM_ADDR_REG:
@@ -71,7 +71,7 @@ uint32_t azRcpReadPI(AzState* state, uint32_t addr)
 
 void azRcpWritePI(AzState* state, uint32_t addr, uint32_t value)
 {
-    printf("PI Write: 0x%08x (0x%08x)\n", addr, value);
+    //printf("PI Write: 0x%08x (0x%08x)\n", addr, value);
     switch (addr)
     {
     case PI_DRAM_ADDR_REG:

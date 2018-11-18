@@ -3,21 +3,21 @@
 
 static void _dmaRead(AzState* state)
 {
-    puts("SI DMA Read");
+    //puts("SI DMA Read");
     azRcpRaiseInterrupt(state, RCP_INTR_SI);
     //getchar();
 }
 
 static void _dmaWrite(AzState* state)
 {
-    puts("SI DMA Write");
+    //puts("SI DMA Write");
     azRcpRaiseInterrupt(state, RCP_INTR_SI);
     //getchar();
 }
 
 uint32_t azRcpReadSI(AzState* state, uint32_t addr)
 {
-    printf("SI Read:  0x%08x\n", addr);
+    //printf("SI Read:  0x%08x\n", addr);
     switch (addr)
     {
     case SI_DRAM_ADDR_REG:
@@ -35,7 +35,7 @@ uint32_t azRcpReadSI(AzState* state, uint32_t addr)
 
 void azRcpWriteSI(AzState* state, uint32_t addr, uint32_t value)
 {
-    printf("SI Write: 0x%08x (0x%08x)\n", addr, value);
+    //printf("SI Write: 0x%08x (0x%08x)\n", addr, value);
     switch (addr)
     {
     case SI_DRAM_ADDR_REG:

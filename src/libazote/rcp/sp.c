@@ -77,7 +77,7 @@ static void _dmaRead(AzState* state)
     uint32_t ramAddr;
     uint32_t spAddr;
 
-    puts("SP DMA (Read)");
+    //puts("SP DMA (Read)");
     pack = state->rsp.cregs[RSP_CREG_DMA_READ_LENGTH];
     length = ((pack & 0xfff) | 0x7) + 1;
     count = ((pack >> 12) & 0xff) + 1;
@@ -100,7 +100,7 @@ static void _dmaRead(AzState* state)
             memcpy(dst + i * length, src + i * (length + skip), length);
     }
     //azRcpRaiseInterrupt(state, RCP_INTR_SP);
-    printf("0x%08x <- 0x%08x (Length: %u, Count: %u, Skip: %u)\n", spAddr, ramAddr, length, count, skip);
+    //printf("0x%08x <- 0x%08x (Length: %u, Count: %u, Skip: %u)\n", spAddr, ramAddr, length, count, skip);
 }
 
 static void _dmaWrite(AzState* state)
@@ -114,7 +114,7 @@ static void _dmaWrite(AzState* state)
     uint32_t ramAddr;
     uint32_t spAddr;
 
-    puts("SP DMA (Write)");
+    //puts("SP DMA (Write)");
     pack = state->rsp.cregs[RSP_CREG_DMA_WRITE_LENGTH];
     length = ((pack & 0xfff) | 0x7) + 1;
     count = ((pack >> 12) & 0xff) + 1;
@@ -137,12 +137,12 @@ static void _dmaWrite(AzState* state)
             memcpy(dst + i * length, src + i * (length + skip), length);
     }
     //azRcpRaiseInterrupt(state, RCP_INTR_SP);
-    printf("0x%08x -> 0x%08x (Length: %u, Count: %u, Skip: %u)\n", spAddr, ramAddr, length, count, skip);
+    //printf("0x%08x -> 0x%08x (Length: %u, Count: %u, Skip: %u)\n", spAddr, ramAddr, length, count, skip);
 }
 
 uint32_t azRspControlRead(AzState* state, uint8_t creg)
 {
-    printf("SP Read: 0x%02x\n", creg);
+    //printf("SP Read: 0x%02x\n", creg);
     switch (creg & 0x0f)
     {
     case RSP_CREG_DMA_CACHE:
@@ -191,7 +191,7 @@ void azRspControlWrite(AzState* state, uint8_t creg, uint32_t value)
     uint32_t tmp;
     uint32_t status;
 
-    printf("SP Write: 0x%02x 0x%08x\n", creg, value);
+    //printf("SP Write: 0x%02x 0x%08x\n", creg, value);
     switch (creg & 0x0f)
     {
     case RSP_CREG_DMA_CACHE:

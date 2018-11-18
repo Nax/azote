@@ -32,10 +32,22 @@
 #define OP_SET_Z_IMAGE              0x3e
 #define OP_SET_COLOR_IMAGE          0x3f
 
+static float fixed10_2(uint16_t fixed)
+{
+    // TODO: use some bits hack
+    float f = (fixed >> 2);
+    f += 0.25 * (fixed & 0x3);
+    return f;
+}
+
 static void runCommandBuffer(AzState* state, char* buffer, size_t length)
 {
     uint64_t    instr;
     uint8_t     op;
+    float       fa;
+    float       fb;
+    float       fc;
+    float       fd;
 
     for (size_t i = 0; i < length / 8; ++i)
     {
@@ -44,6 +56,94 @@ static void runCommandBuffer(AzState* state, char* buffer, size_t length)
         switch (op)
         {
         default:
+            TRAP;
+            break;
+        case OP_NO_OP:
+            TRAP;
+            break;
+        case OP_TEXTURE_RECTANGLE:
+            TRAP;
+            break;
+        case OP_TEXTURE_RECTANGLE_FLIP:
+            TRAP;
+            break;
+        case OP_SYNC_PIPE:
+            TRAP;
+            break;
+        case OP_SYNC_TILE:
+            TRAP;
+            break;
+        case OP_SYNC_FULL:
+            TRAP;
+            break;
+        case OP_SET_KEY_GB:
+            TRAP;
+            break;
+        case OP_SET_KEY_R:
+            TRAP;
+            break;
+        case OP_SET_CONVERT:
+            TRAP;
+            break;
+        case OP_SET_SCISSOR:
+            fa = fixed10_2((instr >> 44) & 0xfff);
+            fb = fixed10_2((instr >> 32) & 0xfff);
+            fc = fixed10_2((instr >> 12) & 0xfff);
+            fd = fixed10_2((instr >>  0) & 0xfff);
+            printf("Scissor: %f %f %f %f\n", fa, fb, fc, fd);
+            break;
+        case OP_SET_PRIM_DEPTH:
+            TRAP;
+            break;
+        case OP_SET_OTHER_MODES:
+            TRAP;
+            break;
+        case OP_LOAD_TLUT:
+            TRAP;
+            break;
+        case OP_SYNC_LOAD:
+            TRAP;
+            break;
+        case OP_SET_TILE_SIZE:
+            TRAP;
+            break;
+        case OP_LOAD_BLOCK:
+            TRAP;
+            break;
+        case OP_LOAD_TILE:
+            TRAP;
+            break;
+        case OP_SET_TILE:
+            TRAP;
+            break;
+        case OP_FILL_RECTANGLE:
+            TRAP;
+            break;
+        case OP_SET_FILL_COLOR:
+            TRAP;
+            break;
+        case OP_SET_FOG_COLOR:
+            TRAP;
+            break;
+        case OP_SET_BLEND_COLOR:
+            TRAP;
+            break;
+        case OP_SET_PRIM_COLOR:
+            TRAP;
+            break;
+        case OP_SET_ENV_COLOR:
+            TRAP;
+            break;
+        case OP_SET_COMBINE_MODE:
+            TRAP;
+            break;
+        case OP_SET_TEXTURE_IMAGE:
+            TRAP;
+            break;
+        case OP_SET_Z_IMAGE:
+            TRAP;
+            break;
+        case OP_SET_COLOR_IMAGE:
             TRAP;
             break;
         }

@@ -9,7 +9,7 @@ static void dmaAudio(AzState* state)
 
 uint32_t azRcpReadAI(AzState* state, uint32_t addr)
 {
-    printf("AI Read:  0x%08x\n", addr);
+    //printf("AI Read:  0x%08x\n", addr);
     switch (addr)
     {
     case AI_DRAM_ADDR_REG:
@@ -32,7 +32,7 @@ uint32_t azRcpReadAI(AzState* state, uint32_t addr)
 
 void azRcpWriteAI(AzState* state, uint32_t addr, uint32_t value)
 {
-    printf("AI Write: 0x%08x (0x%08x)\n", addr, value);
+    //printf("AI Write: 0x%08x (0x%08x)\n", addr, value);
     switch (addr)
     {
     case AI_DRAM_ADDR_REG:
