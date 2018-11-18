@@ -146,6 +146,11 @@
 #define OP_COP1_W           0x14
 #define OP_COP1_L           0x15
 
+#define COP1_BC_BCF         0x00
+#define COP1_BC_BCT         0x01
+#define COP1_BC_BCFL        0x02
+#define COP1_BC_BCTL        0x03
+
 #define OP_CP1_ADD          0x00
 #define OP_CP1_SUB          0x01
 #define OP_CP1_MUL          0x02

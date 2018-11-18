@@ -506,7 +506,46 @@ static uint32_t _runCycles(AzState* state, uint32_t cycles)
                     state->cop1.fcr31 = regs[RT].u32;
                 break;
             case OP_COP_BC:
-                TRAP;
+                switch (RT)
+                {
+                default:
+                    TRAP;
+                    break;
+                case COP1_BC_BCF:
+                    if ((state->cop1.fcr31 & (1 << 23)) == 0)
+                    {
+                        pc2 = pc + (SIMM << 2);
+                    }
+                    break;
+                case COP1_BC_BCT:
+                    if ((state->cop1.fcr31 & (1 << 23)) != 0)
+                    {
+                        pc2 = pc + (SIMM << 2);
+                    }
+                    break;
+                case COP1_BC_BCFL:
+                    if ((state->cop1.fcr31 & (1 << 23)) == 0)
+                    {
+                        pc2 = pc + (SIMM << 2);
+                    }
+                    else
+                    {
+                        pc += 4;
+                        pc2 += 4;
+                    }
+                    break;
+                case COP1_BC_BCTL:
+                    if ((state->cop1.fcr31 & (1 << 23)) != 0)
+                    {
+                        pc2 = pc + (SIMM << 2);
+                    }
+                    else
+                    {
+                        pc += 4;
+                        pc2 += 4;
+                    }
+                    break;
+                }
                 break;
             case OP_COP1_S:
                 switch (op & 0x3f)
