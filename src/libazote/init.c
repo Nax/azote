@@ -28,8 +28,10 @@ AzState* azInit()
 
     initWorker(&state->cpuWorker);
     initWorker(&state->rspWorker);
+    initWorker(&state->rdpWorker);
     pthread_create(&state->cpuWorker.thread, NULL, &azCpuWorkerMain, state);
     pthread_create(&state->rspWorker.thread, NULL, &azRspWorkerMain, state);
+    pthread_create(&state->rdpWorker.thread, NULL, &azRdpWorkerMain, state);
 
     return state;
 }

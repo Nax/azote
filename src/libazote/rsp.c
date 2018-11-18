@@ -626,6 +626,8 @@ void* azRspWorkerMain(void* s)
     uint64_t duration;
     uint64_t cycles;
 
+    pthread_setname_np("RSP Worker");
+
     cycles = 0;
     duration = 0;
     timeLastReport = _getTimeNano();

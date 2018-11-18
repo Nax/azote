@@ -1187,6 +1187,8 @@ void* azCpuWorkerMain(void* s)
     uint64_t cycles;
     uint64_t slice;
 
+    pthread_setname_np("CPU Worker");
+
     cycles = 0;
     referenceTime = _getTimeNano();
     baseTime = _getTimeNano();
@@ -1207,7 +1209,6 @@ void* azCpuWorkerMain(void* s)
         state->cop0.registers[COP0_REG_COUNT] += slice;
         if (state->cop0.registers[COP0_REG_COUNT] == state->cop0.registers[COP0_REG_COMPARE] && state->cop0.registers[COP0_REG_COUNT] != 0)
         {
-            printf("CLOCK INT\n");
             state->cop0.registers[COP0_REG_CAUSE] |= (1 << 15);
         }
         now = _getTimeNano();

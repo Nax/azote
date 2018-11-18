@@ -311,6 +311,7 @@ void        azRcpWriteSI(AzState* state, uint32_t addr, uint32_t value);
 
 void* azCpuWorkerMain(void*);
 void* azRspWorkerMain(void*);
+void* azRdpWorkerMain(void*);
 
 typedef _Atomic uint32_t atomic_u32;
 
@@ -387,6 +388,7 @@ typedef struct {
 struct AzState_ {
     AzWorker    cpuWorker;
     AzWorker    rspWorker;
+    AzWorker    rdpWorker;
 
     AzCPU       cpu;
     AzCoreRSP   rsp;

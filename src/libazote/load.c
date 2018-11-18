@@ -72,7 +72,7 @@ void azLoadFile(AzState* state, const char* path)
     state->rsp.cregs[RSP_CREG_DMA_READ_LENGTH] = 0x00;
     state->rsp.cregs[RSP_CREG_DMA_WRITE_LENGTH] = 0x00;
     state->rsp.cregs[RSP_CREG_SP_STATUS] = 0x01;
-    state->rsp.cregs[RSP_CREG_CMD_STATUS] = 0x98;
+    state->rsp.cregs[RSP_CREG_CMD_STATUS] = 0xa8;
 
     memcpy(state->spDmem, state->cart, 0x1000);
 

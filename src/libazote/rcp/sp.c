@@ -104,29 +104,30 @@ uint32_t azRspControlRead(AzState* state, uint8_t creg)
         return 1;
     case RSP_CREG_CMD_START:
         printf("RSP_CREG_CMD_START\n");
-        exit(1);
         getchar();
         return state->rsp.cregs[creg];
     case RSP_CREG_CMD_END:
         printf("RSP_CREG_CMD_END\n");
-        exit(2);
         getchar();
         return state->rsp.cregs[creg];
     case RSP_CREG_CMD_CURRENT:
         printf("RSP_CREG_CMD_CURRENT\n");
-        exit(3);
         getchar();
         return state->rsp.cregs[creg];
     case RSP_CREG_CMD_STATUS:
         printf("RSP_CREG_CMD_STATUS\n");
         return state->rsp.cregs[creg];
     case RSP_CREG_CMD_CLOCK:
+        printf("RSP_CREG_CMD_CLOCK\n");
         return state->rsp.cregs[creg];
     case RSP_CREG_CMD_BUSY:
+        printf("RSP_CREG_CMD_BUSY\n");
         return state->rsp.cregs[creg];
     case RSP_CREG_CMD_PIPE_BUSY:
+        printf("RSP_CREG_CMD_PIPE_BUSY\n");
         return state->rsp.cregs[creg];
     case RSP_CREG_CMD_TMEM_BUSY:
+        printf("RSP_CREG_CMD_TMEM_BUSY\n");
         return state->rsp.cregs[creg];
     }
     return 0;
@@ -204,23 +205,25 @@ void azRspControlWrite(AzState* state, uint8_t creg, uint32_t value)
         break;
     case RSP_CREG_CMD_START:
         printf("CMD START: 0x%08x\n", value);
-        exit(5);
+        state->rsp.cregs[RSP_CREG_CMD_START] = value;
         getchar();
         break;
     case RSP_CREG_CMD_END:
         printf("CMD END: 0x%08x\n", value);
-        exit(6);
+        state->rsp.cregs[RSP_CREG_CMD_END] = value;
         getchar();
         break;
     case RSP_CREG_CMD_CURRENT:
-        printf("CMD CURRENT: 0x%08x\n", value);
-        exit(7);
-        getchar();
         break;
     case RSP_CREG_CMD_STATUS:
-        printf("CMD STATUS: 0x%08x\n", value);
-        exit(8);
-        getchar();
+        status = state->rsp.cregs[RSP_CREG_CMD_STATUS];
+        if (value & 0x0001) status &= ~0x0001;
+        else if (value & 0x0002) status |= 0x0001;
+        if (value & 0x0004) status &= ~0x0002;
+        else if (value & 0x0008) status |= 0x0002;
+        if (value & 0x0010) status &= ~0x0004;
+        else if (value & 0x0020) status |= 0x0004;
+        state->rsp.cregs[RSP_CREG_CMD_STATUS] = status;
         break;
     case RSP_CREG_CMD_CLOCK:
         break;
