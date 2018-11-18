@@ -12,8 +12,6 @@ static void _dmaRDP(AzState* state)
     char* srcPtr;
     char* dst;
 
-    puts("\n\n\n\n\nRDP DMA\n\n\n\n\n\n");
-    getchar();
     if (state->rsp.cregs[RSP_CREG_CMD_END] < state->rsp.cregs[RSP_CREG_CMD_START])
         return;
 
@@ -61,8 +59,6 @@ static void _dmaRDP(AzState* state)
         state->rsp.cregs[RSP_CREG_CMD_CURRENT] = state->rsp.cregs[RSP_CREG_CMD_END];
         pthread_mutex_unlock(state->rdpCommandBuffer.mutex + index);
         azWorkerStart(&state->rdpWorker);
-        puts("\n\n\n\n\nRDP DMA END\n\n\n\n\n\n");
-        getchar();
     }
     else
     {
