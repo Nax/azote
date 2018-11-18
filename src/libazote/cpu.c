@@ -1179,11 +1179,9 @@ void* azCpuWorkerMain(void* s)
     AzState* state = (AzState*)s;
 
     static const uint32_t granularity = 1024;
-    static const uint64_t kPeriod = 1666666600;
     uint64_t now;
     uint64_t referenceTime;
     uint64_t baseTime;
-    uint64_t dt;
     uint64_t cycles;
     uint64_t slice;
 
@@ -1212,12 +1210,6 @@ void* azCpuWorkerMain(void* s)
             state->cop0.registers[COP0_REG_CAUSE] |= (1 << 15);
         }
         now = _getTimeNano();
-        dt = now - referenceTime;
-        if (dt >= kPeriod)
-        {
-            referenceTime += kPeriod;
-            azRcpRaiseInterrupt(state, RCP_INTR_VI);
-        }
         if ((now - baseTime) >= 1000000000)
         {
             double instrPerSecond = (double)cycles / ((double)(now - baseTime) * 1e-9);

@@ -1,15 +1,22 @@
+#include <QApplication>
+#include <azote/Emulator.h>
+#include <azote/MainWindow.h>
 #include <azote/azote.h>
 
 int main(int argc, char** argv)
 {
-    AzState* state;
+    Emulator emu;
+    QApplication* app;
+    MainWindow* mainWin;
 
     if (argc != 2)
         return 1;
 
-    state = azInit();
-    azLoadFile(state, argv[1]);
-    azRun(state);
-    azExit(state);
-    return 0;
+    app = new QApplication(argc, argv);
+    emu.state = azInit();
+    azLoadFile(emu.state, argv[1]);
+    azRun(emu.state);
+    mainWin = new MainWindow(&emu);
+    mainWin->show();
+    return app->exec();
 }

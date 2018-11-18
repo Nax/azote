@@ -20,6 +20,8 @@ uint32_t azRcpReadMI(AzState* state, uint32_t addr)
 
 void azRcpWriteMI(AzState* state, uint32_t addr, uint32_t value)
 {
+    uint32_t interrupts;
+
     //printf("MI Write: 0x%08x (0x%08x)\n", addr, value);
     switch (addr)
     {
@@ -38,18 +40,20 @@ void azRcpWriteMI(AzState* state, uint32_t addr, uint32_t value)
     case MI_INTR_REG:
         return;
     case MI_INTR_MASK_REG:
-        if (value & 0x0001) state->miRegisters[3] &= ~MI_INTR_SP;
-        else if (value & 0x0002) state->miRegisters[3] |= MI_INTR_SP;
-        if (value & 0x0004) state->miRegisters[3] &= ~MI_INTR_SI;
-        else if (value & 0x0008) state->miRegisters[3] |= MI_INTR_SI;
-        if (value & 0x0010) state->miRegisters[3] &= ~MI_INTR_AI;
-        else if (value & 0x0020) state->miRegisters[3] |= MI_INTR_AI;
-        if (value & 0x0040) state->miRegisters[3] &= ~MI_INTR_VI;
-        else if (value & 0x0080) state->miRegisters[3] |= MI_INTR_VI;
-        if (value & 0x0100) state->miRegisters[3] &= ~MI_INTR_PI;
-        else if (value & 0x0200) state->miRegisters[3] |= MI_INTR_PI;
-        if (value & 0x0400) state->miRegisters[3] &= ~MI_INTR_DP;
-        else if (value & 0x0800) state->miRegisters[3] |= MI_INTR_DP;
+        interrupts = state->miRegisters[3];
+        if (value & 0x0001) interrupts &= ~MI_INTR_SP;
+        else if (value & 0x0002) interrupts |= MI_INTR_SP;
+        if (value & 0x0004) interrupts &= ~MI_INTR_SI;
+        else if (value & 0x0008) interrupts |= MI_INTR_SI;
+        if (value & 0x0010) interrupts &= ~MI_INTR_AI;
+        else if (value & 0x0020) interrupts |= MI_INTR_AI;
+        if (value & 0x0040) interrupts &= ~MI_INTR_VI;
+        else if (value & 0x0080) interrupts |= MI_INTR_VI;
+        if (value & 0x0100) interrupts &= ~MI_INTR_PI;
+        else if (value & 0x0200) interrupts |= MI_INTR_PI;
+        if (value & 0x0400) interrupts &= ~MI_INTR_DP;
+        else if (value & 0x0800) interrupts |= MI_INTR_DP;
+        state->miRegisters[3] = interrupts;
         azRcpCheckInterrupts(state);
         return;
     }

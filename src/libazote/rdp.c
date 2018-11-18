@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <libazote/libazote.h>
 
-#define TRAP  do { printf("Unknown RDP command, INSTR: 0x%016llx  OP: 0x%02x\n", instr, op); getchar(); } while(0)
+#define TRAP  do { printf("Unknown RDP command, INSTR: 0x%016llx  OP: 0x%02x\n", instr, op); /*getchar();*/ } while(0)
 
 #define OP_NO_OP                    0x00
 #define OP_TEXTURE_RECTANGLE        0x24
@@ -74,7 +74,7 @@ static void runCommandBuffer(AzState* state, char* buffer, size_t length)
             TRAP;
             break;
         case OP_SYNC_FULL:
-            TRAP;
+            azRcpRaiseInterrupt(state, RCP_INTR_DP);
             break;
         case OP_SET_KEY_GB:
             TRAP;
@@ -168,7 +168,9 @@ static void runCycles(AzState* state)
         pthread_mutex_unlock(state->rdpCommandBuffer.mutex + readIndex);
         readIndex = altReadIndex;
         if (state->rdpCommandBuffer.size[readIndex] == 0)
+        {
             break;
+        }
     }
     state->rdpWorker.enabled = 0;
     pthread_mutex_unlock(state->rdpCommandBuffer.mutex + readIndex);

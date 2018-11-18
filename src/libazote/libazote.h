@@ -398,28 +398,32 @@ struct AzState_ {
     AzWorker    rspWorker;
     AzWorker    rdpWorker;
 
-    AzCPU           cpu;
-    AzCoreRSP       rsp;
-    AzCOP0          cop0;
-    AzCOP1          cop1;
-    AzTLB           tlb;
-    AzSharedBuffer  rdpCommandBuffer;
+    AzCPU               cpu;
+    AzCoreRSP           rsp;
+    AzCOP0              cop0;
+    AzCOP1              cop1;
+    AzTLB               tlb;
+    AzSharedBuffer      rdpCommandBuffer;
 
-    uint64_t        cartSize;
-    char*           cart;
-    char*           rdram;
-    char*           rdramRegisters;
-    char*           spDmem;
-    char*           spImem;
-    uint32_t*       miRegisters;
-    uint32_t*       viRegisters;
-    uint32_t*       aiRegisters;
-    uint32_t*       piRegisters;
-    char*           riRegisters;
-    uint32_t*       siRegisters;
-    char*           pifram;
-    unsigned        debug:1;
-    unsigned        verbose:1;
+    int                 viSync;
+    pthread_mutex_t     viMutex;
+    pthread_cond_t      viCond;
+
+    uint64_t            cartSize;
+    char*               cart;
+    char*               rdram;
+    char*               rdramRegisters;
+    char*               spDmem;
+    char*               spImem;
+    uint32_t*           miRegisters;
+    uint32_t*           viRegisters;
+    uint32_t*           aiRegisters;
+    uint32_t*           piRegisters;
+    char*               riRegisters;
+    uint32_t*           siRegisters;
+    char*               pifram;
+    unsigned            debug:1;
+    unsigned            verbose:1;
 };
 
 int  azWorkerBarrier(AzWorker* worker);

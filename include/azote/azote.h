@@ -23,4 +23,7 @@ AZOTE_API void          azExit(AzState* state);
 /* load.c */
 AZOTE_API void          azLoadFile(AzState* state, const char* path);
 
+/* frame.c */
+AZOTE_API void          azNextFrame(AzState* state);
+
 #endif

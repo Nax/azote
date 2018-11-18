@@ -67,8 +67,4 @@ void azExit(AzState* state)
 void azRun(AzState* state)
 {
     azWorkerStart(&state->cpuWorker);
-
-    for (;;)
-    {
-    }
 }
