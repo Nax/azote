@@ -5,14 +5,6 @@ void azRcpClearInterrupt(AzState* state, uint8_t intr)
 {
     state->miRegisters[2] &= ~(1 << intr);
     azRcpCheckInterrupts(state);
-    if (intr == RCP_INTR_DP)
-    {
-        puts("\n\nFRAME SYNC END\n\n");
-        pthread_mutex_lock(&state->viMutex);
-        state->viSync = 1;
-        pthread_mutex_unlock(&state->viMutex);
-        pthread_cond_signal(&state->viCond);
-    }
 }
 
 void azRcpRaiseInterrupt(AzState* state, uint8_t intr)

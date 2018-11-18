@@ -14,6 +14,12 @@ AzState* azInit()
 
     state = zalloc(sizeof(*state));
 
+    state->audioDevice = alcOpenDevice(NULL);
+    state->audioContext = alcCreateContext(state->audioDevice, NULL);
+    alcMakeContextCurrent(state->audioContext);
+    alGenSources(1, &state->audioSource);
+    alGenBuffers(2, state->audioBuffers);
+
     state->rdram = zalloc(AZOTE_MEMORY_SIZE);
     state->rdramRegisters = zalloc(0x28);
     state->spDmem = zalloc(0x1000);

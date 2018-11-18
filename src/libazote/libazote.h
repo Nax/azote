@@ -9,6 +9,8 @@
 #include <stdlib.h>
 #include <math.h>
 #include <x86intrin.h>
+#include <OpenAL/al.h>
+#include <OpenAL/alc.h>
 #include <azote/azote.h>
 
 uint32_t azCRC32(void* data, size_t len);
@@ -309,9 +311,9 @@ void        azRcpWriteAI(AzState* state, uint32_t addr, uint32_t value);
 void        azRcpWriteVI(AzState* state, uint32_t addr, uint32_t value);
 void        azRcpWriteSI(AzState* state, uint32_t addr, uint32_t value);
 
-void* azCpuWorkerMain(void*);
 void* azRspWorkerMain(void*);
 void* azRdpWorkerMain(void*);
+void* azAudioWorkerMain(void*);
 
 typedef _Atomic uint32_t atomic_u32;
 
@@ -394,8 +396,14 @@ typedef struct {
 } AzSharedBuffer;
 
 struct AzState_ {
+    ALCdevice*  audioDevice;
+    ALCcontext* audioContext;
+    ALuint      audioSource;
+    ALuint      audioBuffers[2];
+
     AzWorker    rspWorker;
     AzWorker    rdpWorker;
+    AzWorker    audioWorker;
 
     AzCPU               cpu;
     AzCoreRSP           rsp;
@@ -403,6 +411,7 @@ struct AzState_ {
     AzCOP1              cop1;
     AzTLB               tlb;
     AzSharedBuffer      rdpCommandBuffer;
+    size_t              readPos;
 
     int                 viSync;
     pthread_mutex_t     viMutex;

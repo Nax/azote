@@ -17,5 +17,6 @@ void VideoWidget::initializeGL()
 void VideoWidget::paintGL()
 {
     puts("Paint GL");
+    for (;;)
     azNextFrame(_emulator->state);
 }
