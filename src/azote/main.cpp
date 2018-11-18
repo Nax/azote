@@ -15,7 +15,6 @@ int main(int argc, char** argv)
     app = new QApplication(argc, argv);
     emu.state = azInit();
     azLoadFile(emu.state, argv[1]);
-    azRun(emu.state);
     mainWin = new MainWindow(&emu);
     mainWin->show();
     return app->exec();

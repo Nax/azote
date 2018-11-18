@@ -34,10 +34,8 @@ AzState* azInit()
         state->rdpCommandBuffer.data[i] = malloc(128);
     }
 
-    initWorker(&state->cpuWorker);
     initWorker(&state->rspWorker);
     initWorker(&state->rdpWorker);
-    pthread_create(&state->cpuWorker.thread, NULL, &azCpuWorkerMain, state);
     pthread_create(&state->rspWorker.thread, NULL, &azRspWorkerMain, state);
     pthread_create(&state->rdpWorker.thread, NULL, &azRdpWorkerMain, state);
 
@@ -62,9 +60,4 @@ void azExit(AzState* state)
         free(state->pifram);
     }
     free(state);
-}
-
-void azRun(AzState* state)
-{
-    azWorkerStart(&state->cpuWorker);
 }

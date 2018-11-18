@@ -394,7 +394,6 @@ typedef struct {
 } AzSharedBuffer;
 
 struct AzState_ {
-    AzWorker    cpuWorker;
     AzWorker    rspWorker;
     AzWorker    rdpWorker;
 
@@ -429,5 +428,7 @@ struct AzState_ {
 int  azWorkerBarrier(AzWorker* worker);
 void azWorkerStart(AzWorker* worker);
 void azWorkerStop(AzWorker* worker);
+
+void azRunCPU(AzState* state, uint32_t cycles);
 
 #endif

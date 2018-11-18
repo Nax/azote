@@ -7,7 +7,7 @@
 
 #define TRAP    do { printf("CPU TRAP at 0x%016llx    OP: 0x%08x\n", pc, op); getchar(); } while (0)
 
-static uint32_t _runCycles(AzState* state, uint32_t cycles)
+static uint32_t runCyclesCPU(AzState* state, uint32_t cycles)
 {
     uint32_t i;
     uint32_t op;
@@ -1174,48 +1174,21 @@ static inline uint64_t _getTimeNano()
     return clock_gettime_nsec_np(CLOCK_UPTIME_RAW);
 }
 
-void* azCpuWorkerMain(void* s)
+void azRunCPU(AzState* state, uint32_t cycles)
 {
-    AzState* state = (AzState*)s;
+    int64_t counter;
+    uint32_t cyclesBeforeClock;
 
-    static const uint32_t granularity = 1024;
-    uint64_t now;
-    uint64_t referenceTime;
-    uint64_t baseTime;
-    uint64_t cycles;
-    uint64_t slice;
-
-    pthread_setname_np("CPU Worker");
-
-    cycles = 0;
-    referenceTime = _getTimeNano();
-    baseTime = _getTimeNano();
-
-    for (;;)
+    while (cycles)
     {
-        azWorkerBarrier(&state->cpuWorker);
-        if (state->cop0.registers[COP0_REG_COMPARE] > state->cop0.registers[COP0_REG_COUNT]
-            && (state->cop0.registers[COP0_REG_COMPARE] - state->cop0.registers[COP0_REG_COUNT]) < granularity)
+        cyclesBeforeClock = state->cop0.registers[COP0_REG_COMPARE] - state->cop0.registers[COP0_REG_COUNT];
+        if (cyclesBeforeClock > 0 && cyclesBeforeClock < cycles)
         {
-            slice = _runCycles(state, state->cop0.registers[COP0_REG_COMPARE] - state->cop0.registers[COP0_REG_COUNT]);
-        }
-        else
-        {
-            slice = _runCycles(state, granularity);
-        }
-        cycles += slice;
-        state->cop0.registers[COP0_REG_COUNT] += slice;
-        if (state->cop0.registers[COP0_REG_COUNT] == state->cop0.registers[COP0_REG_COMPARE] && state->cop0.registers[COP0_REG_COUNT] != 0)
-        {
+            counter = runCyclesCPU(state, cyclesBeforeClock);
             state->cop0.registers[COP0_REG_CAUSE] |= (1 << 15);
         }
-        now = _getTimeNano();
-        if ((now - baseTime) >= 1000000000)
-        {
-            double instrPerSecond = (double)cycles / ((double)(now - baseTime) * 1e-9);
-            printf("CPU Vi/s: %.2fM   (PC: 0x%016llx)\n", instrPerSecond / 1000000, state->cpu.pc);
-            baseTime = now;
-            cycles = 0;
-        }
+        else
+            counter = runCyclesCPU(state, cycles);
+        cycles -= counter;
     }
 }
