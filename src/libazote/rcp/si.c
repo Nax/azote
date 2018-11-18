@@ -5,14 +5,14 @@ static void _dmaRead(AzState* state)
 {
     puts("SI DMA Read");
     azRcpRaiseInterrupt(state, RCP_INTR_SI);
-    getchar();
+    //getchar();
 }
 
 static void _dmaWrite(AzState* state)
 {
     puts("SI DMA Write");
     azRcpRaiseInterrupt(state, RCP_INTR_SI);
-    getchar();
+    //getchar();
 }
 
 uint32_t azRcpReadSI(AzState* state, uint32_t addr)

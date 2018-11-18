@@ -138,10 +138,16 @@ uint16_t    azMemoryRead16(AzState* state, uint64_t addr);
 uint32_t    azMemoryRead32(AzState* state, uint64_t addr);
 uint64_t    azMemoryRead64(AzState* state, uint64_t addr);
 
+uint32_t    azMemoryReadUnaligned32(AzState* state, uint64_t addr);
+uint64_t    azMemoryReadUnaligned64(AzState* state, uint64_t addr);
+
 void azMemoryWrite8(AzState* state, uint64_t addr, uint8_t value);
 void azMemoryWrite16(AzState* state, uint64_t addr, uint16_t value);
 void azMemoryWrite32(AzState* state, uint64_t addr, uint32_t value);
 void azMemoryWrite64(AzState* state, uint64_t addr, uint64_t value);
+
+void azMemoryWriteUnaligned32(AzState* state, uint64_t addr, uint32_t value);
+void azMemoryWriteUnaligned64(AzState* state, uint64_t addr, uint64_t value);
 
 void azRunRSP(AzState* state);
 

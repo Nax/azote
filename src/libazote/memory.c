@@ -53,10 +53,27 @@ type x(AzState* state, uint64_t vaddr)                                  \
     return res;                                                         \
 }
 
+#define READ_MEMORY_UNALIGNED(x, type, swap)                            \
+type x(AzState* state, uint64_t vaddr)                                  \
+{                                                                       \
+    type res;                                                           \
+    uint32_t addr = azPhysicalAddress(state, vaddr);                    \
+    if (addr < AZOTE_MEMORY_SIZE)                                       \
+        res = swap(*(type*)(state->rdram + addr));                      \
+    else if (addr >= 0x10000000 && addr < 0x10000000 + state->cartSize) \
+        res = swap(*(type*)(state->cart + (addr & 0xfffffff)));         \
+    else                                                                \
+        res = _badIO(state, addr, 0, 0);                                \
+    return res;                                                         \
+}
+
 READ_MEMORY(azMemoryRead8, uint8_t, bswap8);
 READ_MEMORY(azMemoryRead16, uint16_t, bswap16);
 READ_MEMORY(azMemoryRead32, uint32_t, bswap32);
 READ_MEMORY(azMemoryRead64, uint64_t, bswap64);
+
+READ_MEMORY_UNALIGNED(azMemoryReadUnaligned32, uint32_t, bswap32);
+READ_MEMORY_UNALIGNED(azMemoryReadUnaligned64, uint64_t, bswap64);
 
 #define WRITE_MEMORY(x, type, swap)                                     \
 void x(AzState* state, uint64_t vaddr, type value)                      \
@@ -99,7 +116,20 @@ void x(AzState* state, uint64_t vaddr, type value)                      \
         _badIO(state, addr, 1, 0);                                      \
 }
 
+#define WRITE_MEMORY_UNALIGNED(x, type, swap)                           \
+void x(AzState* state, uint64_t vaddr, type value)                      \
+{                                                                       \
+    uint32_t addr = azPhysicalAddress(state, vaddr);                    \
+    if (addr < AZOTE_MEMORY_SIZE)                                       \
+        *(type*)(state->rdram + addr) = swap(value);                    \
+    else                                                                \
+        _badIO(state, addr, 1, 0);                                      \
+}
+
 WRITE_MEMORY(azMemoryWrite8, uint8_t, bswap8);
 WRITE_MEMORY(azMemoryWrite16, uint16_t, bswap16);
 WRITE_MEMORY(azMemoryWrite32, uint32_t, bswap32);
 WRITE_MEMORY(azMemoryWrite64, uint64_t, bswap64);
+
+WRITE_MEMORY_UNALIGNED(azMemoryWriteUnaligned32, uint32_t, bswap32);
+WRITE_MEMORY_UNALIGNED(azMemoryWriteUnaligned64, uint64_t, bswap64);

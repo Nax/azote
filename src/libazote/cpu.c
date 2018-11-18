@@ -28,6 +28,7 @@ static uint32_t _runCycles(AzState* state, uint32_t cycles)
 
     for (i = 0; i < cycles; ++i)
     {
+        state->cpu.pc = pc;
         op = azMemoryRead32(state, pc);
         pc = pc2;
         pc2 += 4;
@@ -738,7 +739,27 @@ static uint32_t _runCycles(AzState* state, uint32_t cycles)
                 regs[RT].i64 = (int16_t)azMemoryRead16(state, regs[RS].u64 + SIMM);
             break;
         case OP_LWL:
-            TRAP;
+            if (RT)
+            {
+                tmp = regs[RS].u64 + SIMM;
+                tmp2 = (uint32_t)azMemoryRead32(state, tmp & ~0x3);
+                switch (tmp & 0x03)
+                {
+                case 0x00:
+                    tmp = tmp2;
+                    break;
+                case 0x01:
+                    tmp = (tmp2 << 8) | (regs[RT].u32 & 0x000000ff);
+                    break;
+                case 0x02:
+                    tmp = (tmp2 << 16) | (regs[RT].u32 & 0x0000ffff);
+                    break;
+                case 0x03:
+                    tmp = (tmp2 << 24) | (regs[RT].u32 & 0x00ffffff);
+                    break;
+                }
+                regs[RT].i64 = (int32_t)tmp;
+            }
             break;
         case OP_LW:
             if (RT)
@@ -753,7 +774,27 @@ static uint32_t _runCycles(AzState* state, uint32_t cycles)
                 regs[RT].u64 = azMemoryRead16(state, regs[RS].u64 + SIMM);
             break;
         case OP_LWR:
-            TRAP;
+            if (RT)
+            {
+                tmp = regs[RS].u64 + SIMM;
+                tmp2 = (uint32_t)azMemoryRead32(state, tmp & ~0x3);
+                switch (tmp & 0x03)
+                {
+                case 0x00:
+                    tmp = (tmp2 >> 24) | (regs[RT].u32 & 0xffffff00);
+                    break;
+                case 0x01:
+                    tmp = (tmp2 >> 16) | (regs[RT].u32 & 0xffff0000);
+                    break;
+                case 0x02:
+                    tmp = (tmp2 >> 8) | (regs[RT].u32 & 0xff000000);
+                    break;
+                case 0x03:
+                    tmp = tmp2;
+                    break;
+                }
+                regs[RT].i64 = (int32_t)tmp;
+            }
             break;
         case OP_LWU:
             if (RT)
@@ -766,7 +807,23 @@ static uint32_t _runCycles(AzState* state, uint32_t cycles)
             azMemoryWrite16(state, regs[RS].u64 + SIMM, regs[RT].u64);
             break;
         case OP_SWL:
-            TRAP;
+            tmp = regs[RS].u64 + SIMM;
+            tmp2 = (uint32_t)azMemoryRead32(state, tmp & ~0x3);
+            switch (tmp & 0x03)
+            {
+            case 0x00:
+                azMemoryWrite32(state, tmp & ~0x3, tmp2);
+                break;
+            case 0x01:
+                azMemoryWrite32(state, tmp & ~0x3, (regs[RT].u32 >> 8) | (tmp2 & 0xff000000));
+                break;
+            case 0x02:
+                azMemoryWrite32(state, tmp & ~0x3, (regs[RT].u32 >> 16) | (tmp2 & 0xffff0000));
+                break;
+            case 0x03:
+                azMemoryWrite32(state, tmp & ~0x3, (regs[RT].u32 >> 24) | (tmp2 & 0xffffff00));
+                break;
+            }
             break;
         case OP_SW:
             azMemoryWrite32(state, regs[RS].u64 + SIMM, regs[RT].u64);
@@ -778,7 +835,23 @@ static uint32_t _runCycles(AzState* state, uint32_t cycles)
             TRAP;
             break;
         case OP_SWR:
-            TRAP;
+            tmp = regs[RS].u64 + SIMM;
+            tmp2 = (uint32_t)azMemoryRead32(state, tmp & ~0x3);
+            switch (tmp & 0x03)
+            {
+            case 0x00:
+                azMemoryWrite32(state, tmp & ~0x3, (regs[RT].u32 << 24) | (tmp2 & 0x00ffffff));
+                break;
+            case 0x01:
+                azMemoryWrite32(state, tmp & ~0x3, (regs[RT].u32 << 16) | (tmp2 & 0x0000ffff));
+                break;
+            case 0x02:
+                azMemoryWrite32(state, tmp & ~0x3, (regs[RT].u32 << 8) | (tmp2 & 0x000000ff));
+                break;
+            case 0x03:
+                azMemoryWrite32(state, tmp & ~0x3, tmp2);
+                break;
+            }
             break;
         case OP_CACHE:
             // TRAP;
