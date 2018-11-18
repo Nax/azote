@@ -28,7 +28,6 @@ static uint32_t _runCycles(AzState* state, uint32_t cycles)
 
     for (i = 0; i < cycles; ++i)
     {
-        state->cpu.pc = pc;
         op = azMemoryRead32(state, pc);
         pc = pc2;
         pc2 += 4;
@@ -572,6 +571,114 @@ static uint32_t _runCycles(AzState* state, uint32_t cycles)
                 case OP_CP1_CVT_L:
                     state->cop1.registers[FD].u64 = fpS2L(state->cop1.registers[FS].f);
                     break;
+                case OP_CP1_C_F:
+                    state->cop1.fcr31 &= ~(1 << 23);
+                    break;
+                case OP_CP1_C_UN:
+                    if (isnan(state->cop1.registers[FS].f)
+                     || isnan(state->cop1.registers[FT].f))
+                        state->cop1.fcr31 |= (1 << 23);
+                    else
+                        state->cop1.fcr31 &= ~(1 << 23);
+                    break;
+                case OP_CP1_C_EQ:
+                    if (state->cop1.registers[FS].f == state->cop1.registers[FT].f)
+                        state->cop1.fcr31 |= (1 << 23);
+                    else
+                        state->cop1.fcr31 &= ~(1 << 23);
+                    break;
+                case OP_CP1_C_UEQ:
+                    if (isnan(state->cop1.registers[FS].f)
+                     || isnan(state->cop1.registers[FT].f)
+                     || state->cop1.registers[FS].f == state->cop1.registers[FT].f)
+                        state->cop1.fcr31 |= (1 << 23);
+                    else
+                        state->cop1.fcr31 &= ~(1 << 23);
+                    break;
+                case OP_CP1_C_OLT:
+                    if (state->cop1.registers[FS].f < state->cop1.registers[FT].f)
+                        state->cop1.fcr31 |= (1 << 23);
+                    else
+                        state->cop1.fcr31 &= ~(1 << 23);
+                    break;
+                case OP_CP1_C_ULT:
+                    if (isnan(state->cop1.registers[FS].f)
+                     || isnan(state->cop1.registers[FT].f)
+                     || state->cop1.registers[FS].f < state->cop1.registers[FT].f)
+                        state->cop1.fcr31 |= (1 << 23);
+                    else
+                        state->cop1.fcr31 &= ~(1 << 23);
+                    break;
+                case OP_CP1_C_OLE:
+                    if (state->cop1.registers[FS].f == state->cop1.registers[FT].f
+                     || state->cop1.registers[FS].f < state->cop1.registers[FT].f)
+                        state->cop1.fcr31 |= (1 << 23);
+                    else
+                        state->cop1.fcr31 &= ~(1 << 23);
+                    break;
+                case OP_CP1_C_ULE:
+                    if (isnan(state->cop1.registers[FS].f)
+                     || isnan(state->cop1.registers[FT].f)
+                     || state->cop1.registers[FS].f == state->cop1.registers[FT].f
+                     || state->cop1.registers[FS].f < state->cop1.registers[FT].f)
+                        state->cop1.fcr31 |= (1 << 23);
+                    else
+                        state->cop1.fcr31 &= ~(1 << 23);
+                    break;
+                case OP_CP1_C_SF:
+                    state->cop1.fcr31 &= ~(1 << 23);
+                    break;
+                case OP_CP1_C_NGLE:
+                    if (isnan(state->cop1.registers[FS].f)
+                     || isnan(state->cop1.registers[FT].f))
+                        state->cop1.fcr31 |= (1 << 23);
+                    else
+                        state->cop1.fcr31 &= ~(1 << 23);
+                    break;
+                case OP_CP1_C_SEQ:
+                    if (state->cop1.registers[FS].f == state->cop1.registers[FT].f)
+                        state->cop1.fcr31 |= (1 << 23);
+                    else
+                        state->cop1.fcr31 &= ~(1 << 23);
+                    break;
+                case OP_CP1_C_NGL:
+                    if (isnan(state->cop1.registers[FS].f)
+                     || isnan(state->cop1.registers[FT].f)
+                     || state->cop1.registers[FS].f == state->cop1.registers[FT].f)
+                        state->cop1.fcr31 |= (1 << 23);
+                    else
+                        state->cop1.fcr31 &= ~(1 << 23);
+                    break;
+                case OP_CP1_C_LT:
+                    if (state->cop1.registers[FS].f < state->cop1.registers[FT].f)
+                        state->cop1.fcr31 |= (1 << 23);
+                    else
+                        state->cop1.fcr31 &= ~(1 << 23);
+                    break;
+                case OP_CP1_C_NGE:
+                    if (isnan(state->cop1.registers[FS].f)
+                     || isnan(state->cop1.registers[FT].f)
+                     || state->cop1.registers[FS].f < state->cop1.registers[FT].f)
+                        state->cop1.fcr31 |= (1 << 23);
+                    else
+                        state->cop1.fcr31 &= ~(1 << 23);
+                    break;
+                case OP_CP1_C_LE:
+                    if (state->cop1.registers[FS].f == state->cop1.registers[FT].f
+                     || state->cop1.registers[FS].f < state->cop1.registers[FT].f)
+                        state->cop1.fcr31 |= (1 << 23);
+                    else
+                        state->cop1.fcr31 &= ~(1 << 23);
+                    break;
+                case OP_CP1_C_NGT:
+                    if (isnan(state->cop1.registers[FS].f)
+                     || isnan(state->cop1.registers[FT].f)
+                     || state->cop1.registers[FS].f == state->cop1.registers[FT].f
+                     || state->cop1.registers[FS].f < state->cop1.registers[FT].f)
+                        state->cop1.fcr31 |= (1 << 23);
+                    else
+                        state->cop1.fcr31 &= ~(1 << 23);
+                    break;
                 }
                 break;
             case OP_COP1_D:
@@ -636,6 +743,114 @@ static uint32_t _runCycles(AzState* state, uint32_t cycles)
                     break;
                 case OP_CP1_CVT_L:
                     state->cop1.registers[FD].u64 = fpD2L(state->cop1.registers[FS].d);
+                    break;
+                case OP_CP1_C_F:
+                    state->cop1.fcr31 &= ~(1 << 23);
+                    break;
+                case OP_CP1_C_UN:
+                    if (isnan(state->cop1.registers[FS].d)
+                     || isnan(state->cop1.registers[FT].d))
+                        state->cop1.fcr31 |= (1 << 23);
+                    else
+                        state->cop1.fcr31 &= ~(1 << 23);
+                    break;
+                case OP_CP1_C_EQ:
+                    if (state->cop1.registers[FS].d == state->cop1.registers[FT].d)
+                        state->cop1.fcr31 |= (1 << 23);
+                    else
+                        state->cop1.fcr31 &= ~(1 << 23);
+                    break;
+                case OP_CP1_C_UEQ:
+                    if (isnan(state->cop1.registers[FS].d)
+                     || isnan(state->cop1.registers[FT].d)
+                     || state->cop1.registers[FS].d == state->cop1.registers[FT].d)
+                        state->cop1.fcr31 |= (1 << 23);
+                    else
+                        state->cop1.fcr31 &= ~(1 << 23);
+                    break;
+                case OP_CP1_C_OLT:
+                    if (state->cop1.registers[FS].d < state->cop1.registers[FT].d)
+                        state->cop1.fcr31 |= (1 << 23);
+                    else
+                        state->cop1.fcr31 &= ~(1 << 23);
+                    break;
+                case OP_CP1_C_ULT:
+                    if (isnan(state->cop1.registers[FS].d)
+                     || isnan(state->cop1.registers[FT].d)
+                     || state->cop1.registers[FS].d < state->cop1.registers[FT].d)
+                        state->cop1.fcr31 |= (1 << 23);
+                    else
+                        state->cop1.fcr31 &= ~(1 << 23);
+                    break;
+                case OP_CP1_C_OLE:
+                    if (state->cop1.registers[FS].d == state->cop1.registers[FT].d
+                     || state->cop1.registers[FS].d < state->cop1.registers[FT].d)
+                        state->cop1.fcr31 |= (1 << 23);
+                    else
+                        state->cop1.fcr31 &= ~(1 << 23);
+                    break;
+                case OP_CP1_C_ULE:
+                    if (isnan(state->cop1.registers[FS].d)
+                     || isnan(state->cop1.registers[FT].d)
+                     || state->cop1.registers[FS].d == state->cop1.registers[FT].d
+                     || state->cop1.registers[FS].d < state->cop1.registers[FT].d)
+                        state->cop1.fcr31 |= (1 << 23);
+                    else
+                        state->cop1.fcr31 &= ~(1 << 23);
+                    break;
+                case OP_CP1_C_SF:
+                    state->cop1.fcr31 &= ~(1 << 23);
+                    break;
+                case OP_CP1_C_NGLE:
+                    if (isnan(state->cop1.registers[FS].d)
+                     || isnan(state->cop1.registers[FT].d))
+                        state->cop1.fcr31 |= (1 << 23);
+                    else
+                        state->cop1.fcr31 &= ~(1 << 23);
+                    break;
+                case OP_CP1_C_SEQ:
+                    if (state->cop1.registers[FS].d == state->cop1.registers[FT].d)
+                        state->cop1.fcr31 |= (1 << 23);
+                    else
+                        state->cop1.fcr31 &= ~(1 << 23);
+                    break;
+                case OP_CP1_C_NGL:
+                    if (isnan(state->cop1.registers[FS].d)
+                     || isnan(state->cop1.registers[FT].d)
+                     || state->cop1.registers[FS].d == state->cop1.registers[FT].d)
+                        state->cop1.fcr31 |= (1 << 23);
+                    else
+                        state->cop1.fcr31 &= ~(1 << 23);
+                    break;
+                case OP_CP1_C_LT:
+                    if (state->cop1.registers[FS].d < state->cop1.registers[FT].d)
+                        state->cop1.fcr31 |= (1 << 23);
+                    else
+                        state->cop1.fcr31 &= ~(1 << 23);
+                    break;
+                case OP_CP1_C_NGE:
+                    if (isnan(state->cop1.registers[FS].d)
+                     || isnan(state->cop1.registers[FT].d)
+                     || state->cop1.registers[FS].d < state->cop1.registers[FT].d)
+                        state->cop1.fcr31 |= (1 << 23);
+                    else
+                        state->cop1.fcr31 &= ~(1 << 23);
+                    break;
+                case OP_CP1_C_LE:
+                    if (state->cop1.registers[FS].d == state->cop1.registers[FT].d
+                     || state->cop1.registers[FS].d < state->cop1.registers[FT].d)
+                        state->cop1.fcr31 |= (1 << 23);
+                    else
+                        state->cop1.fcr31 &= ~(1 << 23);
+                    break;
+                case OP_CP1_C_NGT:
+                    if (isnan(state->cop1.registers[FS].d)
+                     || isnan(state->cop1.registers[FT].d)
+                     || state->cop1.registers[FS].d == state->cop1.registers[FT].d
+                     || state->cop1.registers[FS].d < state->cop1.registers[FT].d)
+                        state->cop1.fcr31 |= (1 << 23);
+                    else
+                        state->cop1.fcr31 &= ~(1 << 23);
                     break;
                 }
                 break;

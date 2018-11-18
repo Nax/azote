@@ -166,6 +166,22 @@
 #define OP_CP1_CVT_D        0x21
 #define OP_CP1_CVT_W        0x24
 #define OP_CP1_CVT_L        0x25
+#define OP_CP1_C_F          0x30
+#define OP_CP1_C_UN         0x31
+#define OP_CP1_C_EQ         0x32
+#define OP_CP1_C_UEQ        0x33
+#define OP_CP1_C_OLT        0x34
+#define OP_CP1_C_ULT        0x35
+#define OP_CP1_C_OLE        0x36
+#define OP_CP1_C_ULE        0x37
+#define OP_CP1_C_SF         0x38
+#define OP_CP1_C_NGLE       0x39
+#define OP_CP1_C_SEQ        0x3a
+#define OP_CP1_C_NGL        0x3b
+#define OP_CP1_C_LT         0x3c
+#define OP_CP1_C_NGE        0x3d
+#define OP_CP1_C_LE         0x3e
+#define OP_CP1_C_NGT        0x3f
 
 #define OP_LWC2_LBV         0x00
 #define OP_LWC2_LSV         0x01
