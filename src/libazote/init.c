@@ -26,6 +26,14 @@ AzState* azInit()
     state->siRegisters = zalloc(0x1c);
     state->pifram = zalloc(0x40);
 
+    for (int i = 0; i < 2; ++i)
+    {
+        pthread_mutex_init(state->rdpCommandBuffer.mutex + i, NULL);
+        state->rdpCommandBuffer.capacity[i] = 128;
+        state->rdpCommandBuffer.size[i] = 0;
+        state->rdpCommandBuffer.data[i] = malloc(128);
+    }
+
     initWorker(&state->cpuWorker);
     initWorker(&state->rspWorker);
     initWorker(&state->rdpWorker);

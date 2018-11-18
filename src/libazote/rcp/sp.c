@@ -2,6 +2,74 @@
 #include <string.h>
 #include <libazote/libazote.h>
 
+static void _dmaRDP(AzState* state)
+{
+    uint32_t index;
+    size_t newCapacity;
+    int fast;
+    uint32_t size;
+    uint32_t srcAddr;
+    char* srcPtr;
+    char* dst;
+
+    puts("\n\n\n\n\nRDP DMA\n\n\n\n\n\n");
+    getchar();
+    if (state->rsp.cregs[RSP_CREG_CMD_END] < state->rsp.cregs[RSP_CREG_CMD_START])
+        return;
+
+    size = state->rsp.cregs[RSP_CREG_CMD_END] - state->rsp.cregs[RSP_CREG_CMD_START];
+    if (size)
+    {
+        /* Check for XBus or fast RDRAM copy */
+        if (state->rsp.cregs[RSP_CREG_CMD_STATUS] & 0x01)
+        {
+            srcPtr = state->spDmem + (state->rsp.cregs[RSP_CREG_CMD_START] & 0xfff);
+            fast = 1;
+        }
+        else if (state->rsp.cregs[RSP_CREG_CMD_START] < AZOTE_MEMORY_SIZE)
+        {
+            srcPtr = state->rdram + state->rsp.cregs[RSP_CREG_CMD_START];
+            fast = 1;
+        }
+        else
+        {
+            srcAddr = state->rsp.cregs[RSP_CREG_CMD_START];
+
+            fast = 0;
+        }
+
+        /* Check for buffer space */
+        index = 1 - state->rdpCommandBuffer.readIndex;
+        pthread_mutex_lock(state->rdpCommandBuffer.mutex + index);
+        while (state->rdpCommandBuffer.size[index] + size > state->rdpCommandBuffer.capacity[index])
+        {
+            newCapacity = state->rdpCommandBuffer.capacity[index] * 2;
+            state->rdpCommandBuffer.data[index] = realloc(state->rdpCommandBuffer.data[index], newCapacity);
+            state->rdpCommandBuffer.capacity[index] = newCapacity;
+        }
+        dst = state->rdpCommandBuffer.data[index] + state->rdpCommandBuffer.size[index];
+
+        /* Copy */
+        if (fast)
+            memcpy(dst, srcPtr, size);
+        else
+        {
+            for (size_t i = 0; i < size; ++i)
+                *(uint8_t*)(dst + i) = azMemoryRead8(state, srcAddr + i);
+        }
+        state->rdpCommandBuffer.size[index] += size;
+        state->rsp.cregs[RSP_CREG_CMD_CURRENT] = state->rsp.cregs[RSP_CREG_CMD_END];
+        pthread_mutex_unlock(state->rdpCommandBuffer.mutex + index);
+        azWorkerStart(&state->rdpWorker);
+        puts("\n\n\n\n\nRDP DMA END\n\n\n\n\n\n");
+        getchar();
+    }
+    else
+    {
+        state->rsp.cregs[RSP_CREG_CMD_CURRENT] = state->rsp.cregs[RSP_CREG_CMD_END];
+    }
+}
+
 static void _dmaRead(AzState* state)
 {
     char* src;
@@ -103,31 +171,20 @@ uint32_t azRspControlRead(AzState* state, uint8_t creg)
         }
         return 1;
     case RSP_CREG_CMD_START:
-        printf("RSP_CREG_CMD_START\n");
-        getchar();
         return state->rsp.cregs[creg];
     case RSP_CREG_CMD_END:
-        printf("RSP_CREG_CMD_END\n");
-        getchar();
         return state->rsp.cregs[creg];
     case RSP_CREG_CMD_CURRENT:
-        printf("RSP_CREG_CMD_CURRENT\n");
-        getchar();
         return state->rsp.cregs[creg];
     case RSP_CREG_CMD_STATUS:
-        printf("RSP_CREG_CMD_STATUS\n");
         return state->rsp.cregs[creg];
     case RSP_CREG_CMD_CLOCK:
-        printf("RSP_CREG_CMD_CLOCK\n");
         return state->rsp.cregs[creg];
     case RSP_CREG_CMD_BUSY:
-        printf("RSP_CREG_CMD_BUSY\n");
         return state->rsp.cregs[creg];
     case RSP_CREG_CMD_PIPE_BUSY:
-        printf("RSP_CREG_CMD_PIPE_BUSY\n");
         return state->rsp.cregs[creg];
     case RSP_CREG_CMD_TMEM_BUSY:
-        printf("RSP_CREG_CMD_TMEM_BUSY\n");
         return state->rsp.cregs[creg];
     }
     return 0;
@@ -204,14 +261,11 @@ void azRspControlWrite(AzState* state, uint8_t creg, uint32_t value)
             state->rsp.cregs[RSP_CREG_SP_RESERVED] = 0;
         break;
     case RSP_CREG_CMD_START:
-        printf("CMD START: 0x%08x\n", value);
         state->rsp.cregs[RSP_CREG_CMD_START] = value;
-        getchar();
         break;
     case RSP_CREG_CMD_END:
-        printf("CMD END: 0x%08x\n", value);
         state->rsp.cregs[RSP_CREG_CMD_END] = value;
-        getchar();
+        _dmaRDP(state);
         break;
     case RSP_CREG_CMD_CURRENT:
         break;
