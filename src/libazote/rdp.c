@@ -2,6 +2,7 @@
 #include <libazote/libazote.h>
 
 #define TRAP  do { printf("Unknown RDP command, INSTR: 0x%016llx  OP: 0x%02x\n", instr, op); /*getchar();*/ } while(0)
+#define TRAP
 
 #define OP_NO_OP                    0x00
 #define OP_TEXTURE_RECTANGLE        0x24

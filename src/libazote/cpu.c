@@ -1182,13 +1182,17 @@ void azRunCPU(AzState* state, uint32_t cycles)
     while (cycles)
     {
         cyclesBeforeClock = state->cop0.registers[COP0_REG_COMPARE] - state->cop0.registers[COP0_REG_COUNT];
-        if (cyclesBeforeClock > 0 && cyclesBeforeClock < cycles)
+        if (cyclesBeforeClock == 0 && state->cop0.registers[COP0_REG_COMPARE])
         {
-            counter = runCyclesCPU(state, cyclesBeforeClock);
             state->cop0.registers[COP0_REG_CAUSE] |= (1 << 15);
+            printf("CLOCK\n");
         }
+
+        if (cyclesBeforeClock > 0 && cyclesBeforeClock < cycles)
+            counter = runCyclesCPU(state, cyclesBeforeClock);
         else
             counter = runCyclesCPU(state, cycles);
+        state->cop0.registers[COP0_REG_COUNT] += counter;
         cycles -= counter;
     }
 }

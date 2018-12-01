@@ -142,7 +142,6 @@ static uint32_t _runCycles(AzState* state, uint32_t cycles)
                 regs[31] = pc + 4;
                 break;
             case OP_SPECIAL_BREAK:
-                printf("RSP BREAK PC: 0x%04x OP: 0x%08x\n", pc, op);
                 state->rspWorker.enabled = 0;
                 state->rsp.cregs[RSP_CREG_SP_STATUS] |= 0x03;
                 if (state->rsp.cregs[RSP_CREG_SP_STATUS] & 0x40)
@@ -359,7 +358,11 @@ static uint32_t _runCycles(AzState* state, uint32_t cycles)
                     TRAP;
                     break;
                 case OP_CP2_VMUDH:
-                    TRAP;
+                    a = vLoad(state, VT);
+                    b = vLoadE(state, VS, E);
+                    acc_md = _mm_mulhi_epi16(a, b);
+                    acc_lo = _mm_setzero_si128();
+                    vStore(state, VD, acc_md);
                     break;
                 case OP_CP2_VMACF:
                     a = vLoad(state, VT);
