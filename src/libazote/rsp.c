@@ -408,7 +408,14 @@ static uint32_t _runCycles(AzState* state, uint32_t cycles)
                     vStore(state, VD, acc_md);
                     break;
                 case OP_CP2_VMADN:
-                    TRAP;
+                    a = vLoad(state, VT);
+                    b = vLoadE(state, VS, E);
+                    hi = _mm_mulhi_epi16(a, b);
+                    lo = _mm_mullo_epi16(a, b);
+                    carry = _mm_srli_epi16(_mm_add_epi16(_mm_srli_epi16(lo, 15), _mm_srli_epi16(acc_lo, 15)), 1);
+                    acc_md = _mm_add_epi16(_mm_add_epi16(acc_md, carry), hi);
+                    acc_lo = _mm_add_epi16(acc_lo, lo);
+                    vStore(state, VD, acc_lo);
                     break;
                 case OP_CP2_VMADH:
                     TRAP;
