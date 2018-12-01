@@ -353,7 +353,11 @@ static uint32_t _runCycles(AzState* state, uint32_t cycles)
                     TRAP;
                     break;
                 case OP_CP2_VMUDM:
-                    TRAP;
+                    a = vLoad(state, VT);
+                    b = vLoadE(state, VS, E);
+                    acc_md = _mm_mulhi_epi16(a, b);
+                    acc_lo = _mm_mullo_epi16(a, b);
+                    vStore(state, VD, acc_md);
                     break;
                 case OP_CP2_VMUDN:
                     a = vLoad(state, VT);
