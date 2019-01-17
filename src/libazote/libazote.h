@@ -3,15 +3,64 @@
 
 /* This file is the private libazote header */
 
-#include <pthread.h>
+#if defined(_MSC_VER)
+# include <intrin.h>
+#else
+# include <x86intrin.h>
+#endif
+
+#if defined(WIN32)
+# include <windows.h>
+#else
+# include <pthread.h>
+#endif
+
 #include <stdint.h>
 #include <string.h>
 #include <stdlib.h>
 #include <math.h>
-#include <x86intrin.h>
-#include <OpenAL/al.h>
-#include <OpenAL/alc.h>
 #include <azote/azote.h>
+
+typedef void (*AzThreadEntrypoint)(void*);
+
+#if defined(WIN32)
+
+inline static void azMultiplySigned128(int64_t* lo, int64_t* hi, int64_t a, int64_t b)
+{
+    *lo = Multiply128(a, b, hi);
+}
+
+inline static void azMultiplyUnsigned128(uint64_t* lo, uint64_t* hi, uint64_t a, uint64_t b)
+{
+    *lo = UnsignedMultiply128(a, b, hi);
+}
+
+typedef HANDLE              AzThread;
+typedef CRITICAL_SECTION    AzMutex;
+typedef CONDITION_VARIABLE  AzConditionVariable;
+typedef uint32_t            AzAtomicU32;
+typedef uint64_t            AzAtomicU64;
+
+#else
+
+typedef pthread_t           AzThread;
+typedef pthread_mutex_t     AzMutex;
+typedef pthread_cond_t      AzConditionVariable;
+typedef _Atomic uint32_t    AzAtomicU32;
+typedef _Atomic uint64_t    AzAtomicU64;
+
+#endif
+
+#define RESTRICT __restrict
+
+uint64_t    azGetTimeNano(void);
+void        azCreateThread(AzThread* thread, AzThreadEntrypoint entrypoint, void* arg);
+void        azCreateMutex(AzMutex* mutex);
+void        azLockMutex(AzMutex* mutex);
+void        azUnlockMutex(AzMutex* mutex);
+void        azCreateConditionVariable(AzConditionVariable* cv);
+void        azWaitConditionVariable(AzConditionVariable* cv, AzMutex* mutex);
+void        azSignalConditionVariable(AzConditionVariable* cv);
 
 uint32_t azCRC32(void* data, size_t len);
 
@@ -315,8 +364,6 @@ void* azRspWorkerMain(void*);
 void* azRdpWorkerMain(void*);
 void* azAudioWorkerMain(void*);
 
-typedef _Atomic uint32_t atomic_u32;
-
 typedef struct AzCOP0_  AzCOP0;
 typedef struct AzCOP1_  AzCOP1;
 typedef struct AzTLB_   AzTLB;
@@ -350,18 +397,18 @@ typedef struct {
 } AzCPU;
 
 typedef struct {
-    uint16_t    pc;
-    uint16_t    pc2;
-    uint32_t    registers[32];
-    atomic_u32  cregs[16];
-    AzVReg      vregs[32];
-    AzVReg      vacc_hi;
-    AzVReg      vacc_md;
-    AzVReg      vacc_lo;
+    uint16_t        pc;
+    uint16_t        pc2;
+    uint32_t        registers[32];
+    AzAtomicU32     cregs[16];
+    AzVReg          vregs[32];
+    AzVReg          vacc_hi;
+    AzVReg          vacc_md;
+    AzVReg          vacc_lo;
 } AzCoreRSP;
 
 struct AzCOP0_ {
-    _Atomic uint64_t    registers[32];
+    AzAtomicU64     registers[32];
 };
 
 struct AzCOP1_ {
@@ -378,32 +425,26 @@ struct AzTLB_ {
 };
 
 typedef struct {
-    pthread_t       thread;
-    _Atomic int     enabled;
-    _Atomic int     enabledFeedback;
-    pthread_cond_t  cond;
-    pthread_cond_t  condFeedback;
-    pthread_mutex_t mutex;
-    pthread_mutex_t mutexFeedback;
+    AzThread                thread;
+    AzAtomicU32             enabled;
+    AzAtomicU32             enabledFeedback;
+    AzConditionVariable     cond;
+    AzConditionVariable     condFeedback;
+    AzMutex                 mutex;
+    AzMutex                 mutexFeedback;
 } AzWorker;
 
 typedef struct {
     char*           data[2];
     size_t          size[2];
     size_t          capacity[2];
-    pthread_mutex_t mutex[2];
-    atomic_u32      readIndex;
+    AzMutex         mutex[2];
+    AzAtomicU32     readIndex;
 } AzSharedBuffer;
 
 struct AzState_ {
-    ALCdevice*  audioDevice;
-    ALCcontext* audioContext;
-    ALuint      audioSource;
-    ALuint      audioBuffers[2];
-
     AzWorker    rspWorker;
     AzWorker    rdpWorker;
-    AzWorker    audioWorker;
 
     AzCPU               cpu;
     AzCoreRSP           rsp;
@@ -412,10 +453,6 @@ struct AzState_ {
     AzTLB               tlb;
     AzSharedBuffer      rdpCommandBuffer;
     size_t              readPos;
-
-    int                 viSync;
-    pthread_mutex_t     viMutex;
-    pthread_cond_t      viCond;
 
     uint64_t            cartSize;
     char*               cart;

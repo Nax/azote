@@ -7,7 +7,7 @@
 
 #define TRAP    do { printf("RSP TRAP at 0x%04x    OP: 0x%08x\n", pc, op); getchar(); } while (0)
 
-static void* bswapLoad128(void* restrict dst, uint8_t base, void* restrict src, size_t len)
+static void* bswapLoad128(void* RESTRICT dst, uint8_t base, void* RESTRICT src, size_t len)
 {
     char* cDst = (char*)dst;
     char* cSrc = (char*)src;
@@ -16,7 +16,7 @@ static void* bswapLoad128(void* restrict dst, uint8_t base, void* restrict src, 
     return cDst;
 }
 
-static void* bswapStore128(void* restrict dst, uint8_t base, void* restrict src, size_t len)
+static void* bswapStore128(void* RESTRICT dst, uint8_t base, void* RESTRICT src, size_t len)
 {
     char* cDst = (char*)dst;
     char* cSrc = (char*)src;
@@ -70,7 +70,6 @@ static __m128i vLoadE(AzState* state, uint8_t r, uint8_t e)
     case 0x0f:
         return _mm_set1_epi16(state->rsp.vregs[r].u16[0]);
     }
-    __builtin_unreachable();
 }
 
 static uint32_t _runCycles(AzState* state, uint32_t cycles)
@@ -646,11 +645,6 @@ end:
     return i;
 }
 
-static inline uint64_t _getTimeNano()
-{
-    return clock_gettime_nsec_np(CLOCK_UPTIME_RAW);
-}
-
 void* azRspWorkerMain(void* s)
 {
     AzState* state = (AzState*)s;
@@ -662,17 +656,15 @@ void* azRspWorkerMain(void* s)
     uint64_t duration;
     uint64_t cycles;
 
-    pthread_setname_np("RSP Worker");
-
     cycles = 0;
     duration = 0;
-    timeLastReport = _getTimeNano();
+    timeLastReport = azGetTimeNano();
     for (;;)
     {
         azWorkerBarrier(&state->rspWorker);
-        timeBefore = _getTimeNano();
+        timeBefore = azGetTimeNano();
         cycles += _runCycles(state, granularity);
-        timeNow = _getTimeNano();
+        timeNow = azGetTimeNano();
         duration += timeNow - timeBefore;
         if ((timeNow - timeLastReport) >= 1000000000)
         {

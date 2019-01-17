@@ -38,7 +38,7 @@ static void _dmaRDP(AzState* state)
 
         /* Check for buffer space */
         index = 1 - state->rdpCommandBuffer.readIndex;
-        pthread_mutex_lock(state->rdpCommandBuffer.mutex + index);
+        azLockMutex(state->rdpCommandBuffer.mutex + index);
         while (state->rdpCommandBuffer.size[index] + size > state->rdpCommandBuffer.capacity[index])
         {
             newCapacity = state->rdpCommandBuffer.capacity[index] * 2;
@@ -57,7 +57,7 @@ static void _dmaRDP(AzState* state)
         }
         state->rdpCommandBuffer.size[index] += size;
         state->rsp.cregs[RSP_CREG_CMD_CURRENT] = state->rsp.cregs[RSP_CREG_CMD_END];
-        pthread_mutex_unlock(state->rdpCommandBuffer.mutex + index);
+        azUnlockMutex(state->rdpCommandBuffer.mutex + index);
         azWorkerStart(&state->rdpWorker);
     }
     else

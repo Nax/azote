@@ -157,16 +157,16 @@ static void runCycles(AzState* state)
     uint32_t altReadIndex;
 
     readIndex = state->rdpCommandBuffer.readIndex;
-    pthread_mutex_lock(state->rdpCommandBuffer.mutex + readIndex);
+    azLockMutex(state->rdpCommandBuffer.mutex + readIndex);
 
     for (;;)
     {
         runCommandBuffer(state, state->rdpCommandBuffer.data[readIndex], state->rdpCommandBuffer.size[readIndex]);
         state->rdpCommandBuffer.size[readIndex] = 0;
         altReadIndex = 1 - readIndex;
-        pthread_mutex_lock(state->rdpCommandBuffer.mutex + altReadIndex);
+        azLockMutex(state->rdpCommandBuffer.mutex + altReadIndex);
         state->rdpCommandBuffer.readIndex = altReadIndex;
-        pthread_mutex_unlock(state->rdpCommandBuffer.mutex + readIndex);
+        azUnlockMutex(state->rdpCommandBuffer.mutex + readIndex);
         readIndex = altReadIndex;
         if (state->rdpCommandBuffer.size[readIndex] == 0)
         {
@@ -174,14 +174,13 @@ static void runCycles(AzState* state)
         }
     }
     state->rdpWorker.enabled = 0;
-    pthread_mutex_unlock(state->rdpCommandBuffer.mutex + readIndex);
+    azUnlockMutex(state->rdpCommandBuffer.mutex + readIndex);
 }
 
 void* azRdpWorkerMain(void* s)
 {
     AzState* state = (AzState*)s;
 
-    pthread_setname_np("RDP Worker");
     for (;;)
     {
         azWorkerBarrier(&state->rdpWorker);

@@ -4,8 +4,9 @@
 
 static void initWorker(AzWorker* worker)
 {
-    pthread_cond_init(&worker->cond, NULL);
-    pthread_mutex_init(&worker->mutex, NULL);
+    azCreateConditionVariable(&worker->cond);
+    azCreateMutex(&worker->mutex);
+    azCreateMutex(&worker->mutexFeedback);
 }
 
 AzState* azInit()
@@ -13,12 +14,6 @@ AzState* azInit()
     AzState* state;
 
     state = zalloc(sizeof(*state));
-
-    state->audioDevice = alcOpenDevice(NULL);
-    state->audioContext = alcCreateContext(state->audioDevice, NULL);
-    alcMakeContextCurrent(state->audioContext);
-    alGenSources(1, &state->audioSource);
-    alGenBuffers(2, state->audioBuffers);
 
     state->rdram = zalloc(AZOTE_MEMORY_SIZE);
     state->rdramRegisters = zalloc(0x28);
@@ -34,7 +29,7 @@ AzState* azInit()
 
     for (int i = 0; i < 2; ++i)
     {
-        pthread_mutex_init(state->rdpCommandBuffer.mutex + i, NULL);
+        azCreateMutex(state->rdpCommandBuffer.mutex + i);
         state->rdpCommandBuffer.capacity[i] = 128;
         state->rdpCommandBuffer.size[i] = 0;
         state->rdpCommandBuffer.data[i] = malloc(128);
@@ -42,8 +37,8 @@ AzState* azInit()
 
     initWorker(&state->rspWorker);
     initWorker(&state->rdpWorker);
-    pthread_create(&state->rspWorker.thread, NULL, &azRspWorkerMain, state);
-    pthread_create(&state->rdpWorker.thread, NULL, &azRdpWorkerMain, state);
+    azCreateThread(&state->rspWorker.thread, &azRspWorkerMain, state);
+    azCreateThread(&state->rdpWorker.thread, &azRdpWorkerMain, state);
 
     return state;
 }

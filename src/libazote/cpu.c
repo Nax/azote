@@ -15,7 +15,6 @@ static uint32_t runCyclesCPU(AzState* state, uint32_t cycles)
     uint64_t pc2;
     uint64_t tmp;
     uint64_t tmp2;
-    __uint128_t u128;
     AzReg* regs = (AzReg*)(&state->cpu.registers[0]);
     AzReg hi;
     AzReg lo;
@@ -117,14 +116,10 @@ static uint32_t runCyclesCPU(AzState* state, uint32_t cycles)
                 hi.i64 = (int32_t)(regs[RS].u32 % regs[RT].u32);
                 break;
             case OP_SPECIAL_DMULT:
-                u128 = (__int128_t)regs[RS].i64 * (__int128_t)regs[RT].i64;
-                hi.u64 = (u128 >> 64);
-                lo.u64 = (u128 & 0xffffffffffffffff);
+                azMultiplySigned128(&lo.i64, &hi.i64, regs[RS].i64, regs[RT].i64);
                 break;
             case OP_SPECIAL_DMULTU:
-                u128 = (__uint128_t)regs[RS].u64 * (__uint128_t)regs[RT].u64;
-                hi.u64 = (u128 >> 64);
-                lo.u64 = (u128 & 0xffffffffffffffff);
+                azMultiplyUnsigned128(&lo.u64, &hi.u64, regs[RS].u64, regs[RT].u64);
                 break;
             case OP_SPECIAL_DDIV:
                 lo.u64 = regs[RS].i64 / regs[RT].i64;
@@ -1167,11 +1162,6 @@ end:
     state->cpu.hi = hi.u64;
     state->cpu.lo = lo.u64;
     return i;
-}
-
-static inline uint64_t _getTimeNano()
-{
-    return clock_gettime_nsec_np(CLOCK_UPTIME_RAW);
 }
 
 void azRunCPU(AzState* state, uint32_t cycles)

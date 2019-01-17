@@ -4,22 +4,22 @@ int azWorkerBarrier(AzWorker* worker)
 {
     if (!worker->enabled)
     {
-        pthread_mutex_lock(&worker->mutex);
+        azLockMutex(&worker->mutex);
         if (!worker->enabled)
         {
-            pthread_mutex_lock(&worker->mutexFeedback);
+            azLockMutex(&worker->mutexFeedback);
             worker->enabledFeedback = 0;
-            pthread_mutex_unlock(&worker->mutexFeedback);
-            pthread_cond_signal(&worker->condFeedback);
+            azUnlockMutex(&worker->mutexFeedback);
+            azSignalConditionVariable(&worker->condFeedback);
             for (;;)
             {
-                pthread_cond_wait(&worker->cond, &worker->mutex);
+                azWaitConditionVariable(&worker->cond, &worker->mutex);
                 if (worker->enabled)
                     break;
             }
             worker->enabledFeedback = 1;
         }
-        pthread_mutex_unlock(&worker->mutex);
+        azUnlockMutex(&worker->mutex);
         return 1;
     }
     return 0;
@@ -27,23 +27,23 @@ int azWorkerBarrier(AzWorker* worker)
 
 void azWorkerStart(AzWorker* worker)
 {
-    pthread_mutex_lock(&worker->mutex);
+    azLockMutex(&worker->mutex);
     worker->enabled = 1;
-    pthread_mutex_unlock(&worker->mutex);
-    pthread_cond_signal(&worker->cond);
+    azUnlockMutex(&worker->mutex);
+    azSignalConditionVariable(&worker->cond);
 }
 
 void azWorkerStop(AzWorker* worker)
 {
-    pthread_mutex_lock(&worker->mutex);
-    pthread_mutex_lock(&worker->mutexFeedback);
+    azLockMutex(&worker->mutex);
+    azLockMutex(&worker->mutexFeedback);
     worker->enabled = 0;
-    pthread_mutex_unlock(&worker->mutex);
+    azUnlockMutex(&worker->mutex);
     for (;;)
     {
-        pthread_cond_wait(&worker->cond, &worker->mutexFeedback);
+        azWaitConditionVariable(&worker->cond, &worker->mutexFeedback);
         if (worker->enabledFeedback == 0)
             break;
     }
-    pthread_mutex_unlock(&worker->mutexFeedback);
+    azUnlockMutex(&worker->mutexFeedback);
 }
