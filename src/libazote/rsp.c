@@ -84,6 +84,7 @@ static uint32_t _runCycles(AzState* state, uint32_t cycles)
     __m128i acc_md;
     __m128i acc_lo;
     AzVReg vtmp;
+    uint64_t tmp64;
 
     /* Copy regs */
     memcpy(regs, state->rsp.registers, sizeof(regs));
@@ -555,24 +556,38 @@ static uint32_t _runCycles(AzState* state, uint32_t cycles)
                 TRAP;
                 break;
             case OP_LWC2_LBV:
-                state->rsp.vregs[RT].u8[15 - VE] = *(uint8_t*)(state->spDmem + (regs[RS] & 0xfff) + VOFF);
+                tmp64 = *(uint8_t*)(state->spDmem + (regs[RS] & 0xfff) + VOFF);
+                a = _mm_set1_epi8(tmp64 & 0xff);
+                mask = _mm_cmpeq_epi8(_mm_set_epi8(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15), _mm_cvtsi32_si128(VE));
+                vregs[RT] = _mm_or_si128(_mm_and_si128(mask, a), _mm_andnot_si128(mask, vregs[RT]));
                 break;
             case OP_LWC2_LSV:
-                state->rsp.vregs[RT].u16[7 - (VE / 2)] = bswap16(*(uint16_t*)(state->spDmem + (regs[RS] & 0xfff) + (VOFF << 1)));
+                tmp64 = bswap16(*(uint16_t*)(state->spDmem + (regs[RS] & 0xfff) + (VOFF << 1)));
+                a = _mm_set1_epi16(tmp64 & 0xffff);
+                mask = _mm_cmpeq_epi16(_mm_set_epi16(0, 2, 4, 6, 8, 10, 12, 14), _mm_cvtsi32_si128(VE));
+                vregs[RT] = _mm_or_si128(_mm_and_si128(mask, a), _mm_andnot_si128(mask, vregs[RT]));
                 break;
             case OP_LWC2_LLV:
-                state->rsp.vregs[RT].u32[3 - (VE / 4)] = bswap32(*(uint32_t*)(state->spDmem + (regs[RS] & 0xfff) + (VOFF << 2)));
+                tmp64 = bswap32(*(uint32_t*)(state->spDmem + (regs[RS] & 0xfff) + (VOFF << 2)));
+                a = _mm_set1_epi32(tmp64 & 0xffffffff);
+                mask = _mm_cmpeq_epi32(_mm_set_epi32(0, 4, 8, 12), _mm_cvtsi32_si128(VE));
+                vregs[RT] = _mm_or_si128(_mm_and_si128(mask, a), _mm_andnot_si128(mask, vregs[RT]));
                 break;
             case OP_LWC2_LDV:
-                state->rsp.vregs[RT].u64[1 - (VE / 8)] = bswap64(*(uint64_t*)(state->spDmem + (regs[RS] & 0xfff) + (VOFF << 3)));
+                tmp64 = bswap64(*(uint64_t*)(state->spDmem + (regs[RS] & 0xfff) + (VOFF << 3)));
+                a = _mm_set1_epi64x(tmp64);
+                mask = _mm_cmpeq_epi64(_mm_set_epi64x(0, 8), _mm_cvtsi32_si128(VE));
+                vregs[RT] = _mm_or_si128(_mm_and_si128(mask, a), _mm_andnot_si128(mask, vregs[RT]));
                 break;
             case OP_LWC2_LQV:
-                tmp = (regs[RS] + VOFF) & 0xfff;
-                bswapLoad128(state->rsp.vregs[RT].u8, 0, state->spDmem + tmp, ((tmp - 1) % 16) + 1);
+                //tmp = (regs[RS] + VOFF) & 0xfff;
+                //bswapLoad128(state->rsp.vregs[RT].u8, 0, state->spDmem + tmp, ((tmp - 1) % 16) + 1);
+                TRAP;
                 break;
             case OP_LWC2_LRV:
-                tmp = (regs[RS] + VOFF) & 0xfff;
-                bswapLoad128(state->rsp.vregs[RT].u8, tmp % 16, state->spDmem + (tmp & 0xff0), tmp % 16);
+                //tmp = (regs[RS] + VOFF) & 0xfff;
+                //bswapLoad128(state->rsp.vregs[RT].u8, tmp % 16, state->spDmem + (tmp & 0xff0), tmp % 16);
+                TRAP;
                 break;
             case OP_LWC2_LPV:
                 TRAP;
