@@ -177,7 +177,7 @@ static void runCycles(AzState* state)
     azUnlockMutex(state->rdpCommandBuffer.mutex + readIndex);
 }
 
-void* azRdpWorkerMain(void* s)
+void azRdpWorkerMain(void* s)
 {
     AzState* state = (AzState*)s;
 

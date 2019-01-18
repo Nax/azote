@@ -43,6 +43,22 @@ typedef uint64_t            AzAtomicU64;
 
 #else
 
+inline static void azMultiplySigned128(int64_t* lo, int64_t* hi, int64_t a, int64_t b)
+{
+    __int128_t tmp;
+    tmp = (__int128_t)a * (__int128_t)b;
+    *hi = (uint64_t)(((__uint128_t)tmp) >> 64);
+    *lo = (uint64_t)(((__uint128_t)tmp) & 0xffffffffffffffff);
+}
+
+inline static void azMultiplyUnsigned128(uint64_t* lo, uint64_t* hi, uint64_t a, uint64_t b)
+{
+    __uint128_t tmp;
+    tmp = (__uint128_t)a * (__uint128_t)b;
+    *hi = (uint64_t)(((__uint128_t)tmp) >> 64);
+    *lo = (uint64_t)(((__uint128_t)tmp) & 0xffffffffffffffff);
+}
+
 typedef pthread_t           AzThread;
 typedef pthread_mutex_t     AzMutex;
 typedef pthread_cond_t      AzConditionVariable;
@@ -360,9 +376,8 @@ void        azRcpWriteAI(AzState* state, uint32_t addr, uint32_t value);
 void        azRcpWriteVI(AzState* state, uint32_t addr, uint32_t value);
 void        azRcpWriteSI(AzState* state, uint32_t addr, uint32_t value);
 
-void* azRspWorkerMain(void*);
-void* azRdpWorkerMain(void*);
-void* azAudioWorkerMain(void*);
+void azRspWorkerMain(void*);
+void azRdpWorkerMain(void*);
 
 typedef struct AzCOP0_  AzCOP0;
 typedef struct AzCOP1_  AzCOP1;

@@ -657,7 +657,7 @@ end:
     return i;
 }
 
-void* azRspWorkerMain(void* s)
+void azRspWorkerMain(void* s)
 {
     AzState* state = (AzState*)s;
 
