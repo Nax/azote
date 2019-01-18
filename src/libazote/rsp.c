@@ -83,6 +83,7 @@ static uint32_t _runCycles(AzState* state, uint32_t cycles)
     __m128i acc_hi;
     __m128i acc_md;
     __m128i acc_lo;
+    AzVReg vtmp;
 
     /* Copy regs */
     memcpy(regs, state->rsp.registers, sizeof(regs));
@@ -291,7 +292,8 @@ static uint32_t _runCycles(AzState* state, uint32_t cycles)
                 vregs[RD] = _mm_or_si128(_mm_and_si128(mask, a), _mm_andnot_si128(mask, vregs[RD]));
                 break;
             case OP_COP_MF:
-                regs[RT] = (int32_t)((int16_t)state->rsp.vregs[RD].u16[7 - (VE / 2)]);
+                _mm_store_si128(&vtmp.vi, vregs[RD]);
+                regs[RT] = (int32_t)((int16_t)vtmp.u16[7 - (VE / 2)]);
                 break;
             case 0x10:
             case 0x11:
