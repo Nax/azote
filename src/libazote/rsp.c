@@ -25,51 +25,42 @@ static void* bswapStore128(void* RESTRICT dst, uint8_t base, void* RESTRICT src,
     return cDst;
 }
 
-static void vStore(AzState* state, uint8_t r, __m128i value)
-{
-    _mm_store_si128(&state->rsp.vregs[r].vi, value);
-}
-
-static __m128i vLoad(AzState* state, uint8_t r)
-{
-    return _mm_load_si128((__m128i*)&state->rsp.vregs[r]);
-}
-
-static __m128i vLoadE(AzState* state, uint8_t r, uint8_t e)
+static __m128i vLoadE(__m128i* vregs, uint8_t r, uint8_t e)
 {
     switch (e)
     {
     case 0x00:
-        return _mm_load_si128((__m128i*)&state->rsp.vregs[r]);
+        return vregs[r];
     case 0x02:
-        return _mm_set1_epi64x(state->rsp.vregs[r].u64[1]);
+        return _mm_set1_epi64x(_mm_extract_epi64(vregs[r], 1));
     case 0x03:
-        return _mm_set1_epi64x(state->rsp.vregs[r].u64[0]);
+        return _mm_set1_epi64x(_mm_extract_epi64(vregs[r], 0));
     case 0x04:
-        return _mm_set1_epi32(state->rsp.vregs[r].u32[3]);
+        return _mm_set1_epi32(_mm_extract_epi32(vregs[r], 3));
     case 0x05:
-        return _mm_set1_epi32(state->rsp.vregs[r].u32[2]);
+        return _mm_set1_epi32(_mm_extract_epi32(vregs[r], 2));
     case 0x06:
-        return _mm_set1_epi32(state->rsp.vregs[r].u32[1]);
+        return _mm_set1_epi32(_mm_extract_epi32(vregs[r], 1));
     case 0x07:
-        return _mm_set1_epi32(state->rsp.vregs[r].u32[0]);
+        return _mm_set1_epi32(_mm_extract_epi32(vregs[r], 0));
     case 0x08:
-        return _mm_set1_epi16(state->rsp.vregs[r].u16[7]);
+        return _mm_set1_epi16(_mm_extract_epi16(vregs[r], 7));
     case 0x09:
-        return _mm_set1_epi16(state->rsp.vregs[r].u16[6]);
+        return _mm_set1_epi16(_mm_extract_epi16(vregs[r], 6));
     case 0x0a:
-        return _mm_set1_epi16(state->rsp.vregs[r].u16[5]);
+        return _mm_set1_epi16(_mm_extract_epi16(vregs[r], 5));
     case 0x0b:
-        return _mm_set1_epi16(state->rsp.vregs[r].u16[4]);
+        return _mm_set1_epi16(_mm_extract_epi16(vregs[r], 4));
     case 0x0c:
-        return _mm_set1_epi16(state->rsp.vregs[r].u16[3]);
+        return _mm_set1_epi16(_mm_extract_epi16(vregs[r], 3));
     case 0x0d:
-        return _mm_set1_epi16(state->rsp.vregs[r].u16[2]);
+        return _mm_set1_epi16(_mm_extract_epi16(vregs[r], 2));
     case 0x0e:
-        return _mm_set1_epi16(state->rsp.vregs[r].u16[1]);
+        return _mm_set1_epi16(_mm_extract_epi16(vregs[r], 1));
     case 0x0f:
-        return _mm_set1_epi16(state->rsp.vregs[r].u16[0]);
+        return _mm_set1_epi16(_mm_extract_epi16(vregs[r], 0));
     }
+    return _mm_setzero_si128();
 }
 
 static uint32_t _runCycles(AzState* state, uint32_t cycles)
@@ -79,7 +70,8 @@ static uint32_t _runCycles(AzState* state, uint32_t cycles)
     uint16_t pc;
     uint16_t pc2;
     uint32_t tmp;
-    uint32_t* regs;
+    uint32_t regs[32];
+    __m128i vregs[32];
     __m128i a;
     __m128i b;
     __m128i c;
@@ -87,14 +79,23 @@ static uint32_t _runCycles(AzState* state, uint32_t cycles)
     __m128i hi;
     __m128i lo;
     __m128i carry;
+    __m128i mask;
     __m128i acc_hi;
     __m128i acc_md;
     __m128i acc_lo;
 
-    regs = state->rsp.registers;
+    /* Copy regs */
+    memcpy(regs, state->rsp.registers, sizeof(regs));
+
+    /* Copy vector regs */
+    for (size_t i = 0; i < 32; ++i)
+        vregs[i] = _mm_load_si128(&state->rsp.vregs->vi);
+
+    /* Load PC */
     pc = state->rsp.pc;
     pc2 = state->rsp.pc2;
 
+    /* Load acc */
     acc_hi = _mm_load_si128(&state->rsp.vacc_hi.vi);
     acc_md = _mm_load_si128(&state->rsp.vacc_md.vi);
     acc_lo = _mm_load_si128(&state->rsp.vacc_lo.vi);
@@ -285,7 +286,9 @@ static uint32_t _runCycles(AzState* state, uint32_t cycles)
                 TRAP;
                 break;
             case OP_COP_MT:
-                state->rsp.vregs[RD].u16[7 - (VE / 2)] = (regs[RT] & 0xffff);
+                a = _mm_set1_epi16(regs[RT] & 0xffff);
+                mask = _mm_cmpeq_epi16(_mm_set_epi16(0, 2, 4, 6, 8, 10, 12, 14), _mm_cvtsi32_si128(VE));
+                vregs[RD] = _mm_or_si128(_mm_and_si128(mask, a), _mm_andnot_si128(mask, vregs[RD]));
                 break;
             case OP_COP_MF:
                 regs[RT] = (int32_t)((int16_t)state->rsp.vregs[RD].u16[7 - (VE / 2)]);
@@ -312,8 +315,8 @@ static uint32_t _runCycles(AzState* state, uint32_t cycles)
                     TRAP;
                     break;
                 case OP_CP2_VMULF:
-                    a = vLoad(state, VT);
-                    b = vLoadE(state, VS, E);
+                    a = vregs[VT];
+                    b = vLoadE(vregs, VS, E);
                     hi = _mm_mulhi_epi16(a, b);
                     lo = _mm_mullo_epi16(a, b);
                     acc_hi = _mm_or_si128(_mm_slli_epi16(hi, 1), _mm_srli_epi16(lo, 15));
@@ -325,11 +328,11 @@ static uint32_t _runCycles(AzState* state, uint32_t cycles)
                     acc_hi = _mm_add_epi16(acc_hi, d);
                     c = _mm_unpacklo_epi16(acc_md, acc_hi);
                     d = _mm_unpackhi_epi16(acc_md, acc_hi);
-                    vStore(state, VD, _mm_packs_epi32(c, d));
+                    vregs[VD] = _mm_packs_epi32(c, d);
                     break;
                 case OP_CP2_VMULU:
-                    a = vLoad(state, VT);
-                    b = vLoadE(state, VS, E);
+                    a = vregs[VT];
+                    b = vLoadE(vregs, VS, E);
                     hi = _mm_mulhi_epu16(a, b);
                     lo = _mm_mullo_epi16(a, b);
                     acc_hi = _mm_or_si128(_mm_slli_epi16(hi, 1), _mm_srli_epi16(lo, 15));
@@ -340,7 +343,7 @@ static uint32_t _runCycles(AzState* state, uint32_t cycles)
                     acc_md = _mm_add_epi16(acc_md, c);
                     acc_hi = _mm_add_epi16(acc_hi, d);
                     c = _mm_xor_si128(_mm_cmpeq_epi16(acc_hi, _mm_setzero_si128()), _mm_setzero_si128());
-                    vStore(state, VD, _mm_adds_epu16(acc_md, c));
+                    vregs[VD] = _mm_adds_epu16(acc_md, c);
                     break;
                 case OP_CP2_VRNDP:
                     TRAP;
@@ -352,29 +355,29 @@ static uint32_t _runCycles(AzState* state, uint32_t cycles)
                     TRAP;
                     break;
                 case OP_CP2_VMUDM:
-                    a = vLoad(state, VT);
-                    b = vLoadE(state, VS, E);
+                    a = vregs[VT];
+                    b = vLoadE(vregs, VS, E);
                     acc_md = _mm_mulhi_epi16(a, b);
                     acc_lo = _mm_mullo_epi16(a, b);
-                    vStore(state, VD, acc_md);
+                    vregs[VD] = acc_md;
                     break;
                 case OP_CP2_VMUDN:
-                    a = vLoad(state, VT);
-                    b = vLoadE(state, VS, E);
+                    a = vregs[VT];
+                    b = vLoadE(vregs, VS, E);
                     acc_md = _mm_mulhi_epi16(a, b);
                     acc_lo = _mm_mullo_epi16(a, b);
-                    vStore(state, VD, acc_lo);
+                    vregs[VD] = acc_lo;
                     break;
                 case OP_CP2_VMUDH:
-                    a = vLoad(state, VT);
-                    b = vLoadE(state, VS, E);
+                    a = vregs[VT];
+                    b = vLoadE(vregs, VS, E);
                     acc_md = _mm_mulhi_epi16(a, b);
                     acc_lo = _mm_setzero_si128();
-                    vStore(state, VD, acc_md);
+                    vregs[VD] = acc_md;
                     break;
                 case OP_CP2_VMACF:
-                    a = vLoad(state, VT);
-                    b = vLoadE(state, VS, E);
+                    a = vregs[VT];
+                    b = vLoadE(vregs, VS, E);
                     hi = _mm_mulhi_epi16(a, b);
                     lo = _mm_mullo_epi16(a, b);
                     hi = _mm_or_si128(_mm_slli_epi16(hi, 1), _mm_srli_epi16(lo, 15));
@@ -384,7 +387,7 @@ static uint32_t _runCycles(AzState* state, uint32_t cycles)
                     acc_md = _mm_add_epi16(acc_md, lo);
                     c = _mm_unpacklo_epi16(acc_md, acc_hi);
                     d = _mm_unpackhi_epi16(acc_md, acc_hi);
-                    vStore(state, VD, _mm_packs_epi32(c, d));
+                    vregs[VD] = _mm_packs_epi32(c, d);
                     break;
                 case OP_CP2_VMACU:
                     TRAP;
@@ -396,40 +399,40 @@ static uint32_t _runCycles(AzState* state, uint32_t cycles)
                     TRAP;
                     break;
                 case OP_CP2_VMADL:
-                    a = vLoad(state, VT);
-                    b = vLoadE(state, VS, E);
+                    a = vregs[VT];
+                    b = vLoadE(vregs, VS, E);
                     hi = _mm_mulhi_epi16(a, b);
                     carry = _mm_srli_epi16(_mm_add_epi16(_mm_srli_epi16(hi, 15), _mm_srli_epi16(acc_lo, 15)), 1);
                     acc_md = _mm_add_epi16(acc_md, carry);
                     acc_lo = _mm_add_epi16(acc_lo, hi);
-                    vStore(state, VD, acc_lo);
+                    vregs[VD] = acc_lo;
                     break;
                 case OP_CP2_VMADM:
-                    a = vLoad(state, VT);
-                    b = vLoadE(state, VS, E);
+                    a = vregs[VT];
+                    b = vLoadE(vregs, VS, E);
                     hi = _mm_mulhi_epi16(a, b);
                     lo = _mm_mullo_epi16(a, b);
                     carry = _mm_srli_epi16(_mm_add_epi16(_mm_srli_epi16(lo, 15), _mm_srli_epi16(acc_lo, 15)), 1);
                     acc_md = _mm_add_epi16(_mm_add_epi16(acc_md, carry), hi);
                     acc_lo = _mm_add_epi16(acc_lo, lo);
-                    vStore(state, VD, acc_md);
+                    vregs[VD] = acc_md;
                     break;
                 case OP_CP2_VMADN:
-                    a = vLoad(state, VT);
-                    b = vLoadE(state, VS, E);
+                    a = vregs[VT];
+                    b = vLoadE(vregs, VS, E);
                     hi = _mm_mulhi_epi16(a, b);
                     lo = _mm_mullo_epi16(a, b);
                     carry = _mm_srli_epi16(_mm_add_epi16(_mm_srli_epi16(lo, 15), _mm_srli_epi16(acc_lo, 15)), 1);
                     acc_md = _mm_add_epi16(_mm_add_epi16(acc_md, carry), hi);
                     acc_lo = _mm_add_epi16(acc_lo, lo);
-                    vStore(state, VD, acc_lo);
+                    vregs[VD] = acc_lo;
                     break;
                 case OP_CP2_VMADH:
-                    a = vLoad(state, VT);
-                    b = vLoadE(state, VS, E);
+                    a = vregs[VT];
+                    b = vLoadE(vregs, VS, E);
                     hi = _mm_mulhi_epi16(a, b);
                     acc_md = _mm_add_epi16(acc_md, hi);
-                    vStore(state, VD, acc_md);
+                    vregs[VD] = acc_md;
                     break;
                 case OP_CP2_VADD:
                     TRAP;
@@ -635,10 +638,19 @@ static uint32_t _runCycles(AzState* state, uint32_t cycles)
     }
 
 end:
+    /* Store regs */
+    memcpy(state->rsp.registers, regs, sizeof(regs));
+
+    /* Store vector regs */
+    for (size_t i = 0; i < 32; ++i)
+        _mm_store_si128(&state->rsp.vregs->vi, vregs[i]);
+
+    /* Store acc */
     _mm_store_si128(&state->rsp.vacc_hi.vi, acc_hi);
     _mm_store_si128(&state->rsp.vacc_md.vi, acc_md);
     _mm_store_si128(&state->rsp.vacc_lo.vi, acc_lo);
 
+    /* Store PC */
     state->rsp.pc = pc;
     state->rsp.pc2 = pc2;
 
