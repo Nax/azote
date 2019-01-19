@@ -7,15 +7,6 @@
 
 #define TRAP    do { printf("RSP TRAP at 0x%04x    OP: 0x%08x\n", pc, op); getchar(); } while (0)
 
-static void* bswapLoad128(void* RESTRICT dst, uint8_t base, void* RESTRICT src, size_t len)
-{
-    char* cDst = (char*)dst;
-    char* cSrc = (char*)src;
-    for (size_t i = 0; i < len; ++i)
-        cDst[15 - base - i] = cSrc[i];
-    return cDst;
-}
-
 static void* bswapStore128(void* RESTRICT dst, uint8_t base, void* RESTRICT src, size_t len)
 {
     char* cDst = (char*)dst;
@@ -23,6 +14,16 @@ static void* bswapStore128(void* RESTRICT dst, uint8_t base, void* RESTRICT src,
     for (size_t i = 0; i < len; ++i)
         cDst[i] = cSrc[15 - base - i];
     return cDst;
+}
+
+static void bswap128(void* data)
+{
+    uint64_t* data64 = data;
+    uint64_t tmp;
+
+    tmp = bswap64(data64[0]);
+    data64[0] = bswap64(data64[1]);
+    data64[1] = tmp;
 }
 
 static __m128i vLoadE(__m128i* vregs, uint8_t r, uint8_t e)
@@ -70,6 +71,7 @@ static uint32_t _runCycles(AzState* state, uint32_t cycles)
     uint16_t pc;
     uint16_t pc2;
     uint32_t tmp;
+    uint32_t tmp2;
     uint32_t regs[32];
     __m128i vregs[32];
     __m128i a;
@@ -580,14 +582,20 @@ static uint32_t _runCycles(AzState* state, uint32_t cycles)
                 vregs[RT] = _mm_or_si128(_mm_and_si128(mask, a), _mm_andnot_si128(mask, vregs[RT]));
                 break;
             case OP_LWC2_LQV:
-                //tmp = (regs[RS] + VOFF) & 0xfff;
-                //bswapLoad128(state->rsp.vregs[RT].u8, 0, state->spDmem + tmp, ((tmp - 1) % 16) + 1);
-                TRAP;
+                tmp = (regs[RS] + (VOFF << 4)) & 0xfff;
+                memcpy(&vtmp.u8, state->spDmem + (tmp & 0xff0), 16);
+                bswap128(&vtmp.u8);
+                a = _mm_load_si128(&vtmp.vi);
+                mask = _mm_cmpgt_epi16(_mm_cvtsi32_si128(16 - (tmp & 0xf)), _mm_set_epi8(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15));
+                vregs[RT] = _mm_or_si128(_mm_and_si128(mask, a), _mm_andnot_si128(mask, vregs[RT]));
                 break;
             case OP_LWC2_LRV:
-                //tmp = (regs[RS] + VOFF) & 0xfff;
-                //bswapLoad128(state->rsp.vregs[RT].u8, tmp % 16, state->spDmem + (tmp & 0xff0), tmp % 16);
-                TRAP;
+                tmp = (regs[RS] + (VOFF << 4)) & 0xfff;
+                memcpy(&vtmp.u8, state->spDmem + ((tmp - 16) & 0xff0), 16);
+                bswap128(&vtmp.u8);
+                a = _mm_load_si128(&vtmp.vi);
+                mask = _mm_cmpgt_epi16(_mm_cvtsi32_si128(tmp & 0xf), _mm_setr_epi8(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15));
+                vregs[RT] = _mm_or_si128(_mm_and_si128(mask, a), _mm_andnot_si128(mask, vregs[RT]));
                 break;
             case OP_LWC2_LPV:
                 TRAP;
