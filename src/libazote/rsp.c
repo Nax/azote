@@ -485,7 +485,12 @@ static uint32_t _runCycles(AzState* state, uint32_t cycles)
                     vregs[VD] = acc_md;
                     break;
                 case OP_CP2_VADD:
-                    TRAP;
+                    a = vregs[VT];
+                    b = vLoadE(vregs, VS, E);
+                    c = _mm_srli_epi16(_mm_cmpgt_epi16(_mm_and_si128(_mm_set1_epi16(vco), _mm_set_epi16(1, 2, 4, 8, 16, 32, 64, 128)), _mm_setzero_si128()), 15);
+                    acc_lo = _mm_add_epi16(_mm_add_epi16(a, b), c);
+                    vregs[VD] = acc_lo;
+                    vco = 0;
                     break;
                 case OP_CP2_VSUB:
                     TRAP;
