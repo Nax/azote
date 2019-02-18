@@ -5,7 +5,7 @@
 #include <libazote/libazote.h>
 #include <libazote/mips.h>
 
-#define TRAP    do { printf("RSP TRAP at 0x%04x    OP: 0x%08x\n", pc, op); getchar(); } while (0)
+#define TRAP    do { printf("%s:%d - RSP TRAP at 0x%04x    OP: 0x%08x\n", __FILE__, __LINE__, pc, op); getchar(); } while (0)
 
 static void* bswapStore128(void* RESTRICT dst, uint8_t base, void* RESTRICT src, size_t len)
 {
@@ -297,6 +297,43 @@ static uint32_t _runCycles(AzState* state, uint32_t cycles)
             default:
                 TRAP;
                 break;
+            case OP_COP_CT:
+                switch (RD)
+                {
+                case 0:
+                    vco = regs[RT];
+                    break;
+                case 1:
+                    vcc = regs[RT];
+                    break;
+                case 2:
+                    vce = regs[RT];
+                    break;
+                default:
+                    TRAP;
+                    break;
+                }
+                break;
+            case OP_COP_CF:
+                if (RT)
+                {
+                    switch (RD)
+                    {
+                    case 0:
+                        regs[RT] = vco;
+                        break;
+                    case 1:
+                        regs[RT] = vcc;
+                        break;
+                    case 2:
+                        regs[RT] = vce;
+                        break;
+                    default:
+                        TRAP;
+                        break;
+                    }
+                }
+                break;
             case OP_COP_MT:
                 a = _mm_set1_epi16(regs[RT] & 0xffff);
                 mask = _mm_cmpeq_epi16(_mm_set_epi16(0, 2, 4, 6, 8, 10, 12, 14), _mm_cvtsi32_si128(VE));
@@ -478,7 +515,77 @@ static uint32_t _runCycles(AzState* state, uint32_t cycles)
                     TRAP;
                     break;
                 case OP_CP2_VCL:
-                    TRAP;
+                    /* DUMMY: Copy of VCH */
+                    a = vregs[VS];
+                    b = vLoadE(vregs, VT, E);
+                    c = _mm_sub_epi16(_mm_setzero_si128(), b);
+                    acc_lo = _mm_min_epi16(_mm_max_epi16(c, a), b);
+                    vregs[VD] = acc_lo;
+
+                    mask = _mm_cmplt_epi16(_mm_xor_si128(a, b), _mm_setzero_si128());
+
+                    vce = 0;
+                    vco = 0;
+                    vcc = 0;
+
+                    /* Start with VCE, it's 1 if a+b == 0xFFFF, 0 otherwise */
+                    tmp = (uint32_t)_mm_movemask_epi8(_mm_cmpeq_epi16(_mm_add_epi16(a, b), _mm_set1_epi16(0xffff)));
+                    vce |= ((tmp & 0x0001) >> 0);
+                    vce |= ((tmp & 0x0004) >> 1);
+                    vce |= ((tmp & 0x0010) >> 2);
+                    vce |= ((tmp & 0x0040) >> 3);
+                    vce |= ((tmp & 0x0100) >> 4);
+                    vce |= ((tmp & 0x0400) >> 5);
+                    vce |= ((tmp & 0x1000) >> 6);
+                    vce |= ((tmp & 0x4000) >> 7);
+
+                    /* Low 8 bits of VCO is sign equal */
+                    tmp = (uint32_t)_mm_movemask_epi8(_mm_xor_si128(a, b));
+                    vco |= ((tmp & 0x0002) >> 1);
+                    vco |= ((tmp & 0x0008) >> 2);
+                    vco |= ((tmp & 0x0020) >> 3);
+                    vco |= ((tmp & 0x0080) >> 4);
+                    vco |= ((tmp & 0x0200) >> 5);
+                    vco |= ((tmp & 0x0800) >> 6);
+                    vco |= ((tmp & 0x2000) >> 7);
+                    vco |= ((tmp & 0x8000) >> 8);
+
+                    /* High 8 bits of VCO is not equal */
+                    tmp = ~((uint32_t)_mm_movemask_epi8(_mm_or_si128(_mm_cmpeq_epi16(a, b), _mm_cmpeq_epi16(a, c))));
+                    vco |= ((tmp & 0x0001) << 8);
+                    vco |= ((tmp & 0x0004) << 7);
+                    vco |= ((tmp & 0x0010) << 6);
+                    vco |= ((tmp & 0x0040) << 5);
+                    vco |= ((tmp & 0x0100) << 4);
+                    vco |= ((tmp & 0x0400) << 3);
+                    vco |= ((tmp & 0x1000) << 2);
+                    vco |= ((tmp & 0x4000) << 1);
+
+                    /* LE */
+                    c = _mm_cmpgt_epi16(_mm_setzero_si128(), _mm_add_epi16(a, b));
+                    d = _mm_cmplt_epi16(b, _mm_setzero_si128());
+                    tmp = ~((uint32_t)_mm_movemask_epi8(_mm_or_si128(_mm_and_si128(mask, c), _mm_andnot_si128(mask, d))));
+                    vcc |= ((tmp & 0x0001) >> 0);
+                    vcc |= ((tmp & 0x0004) >> 1);
+                    vcc |= ((tmp & 0x0010) >> 2);
+                    vcc |= ((tmp & 0x0040) >> 3);
+                    vcc |= ((tmp & 0x0100) >> 4);
+                    vcc |= ((tmp & 0x0400) >> 5);
+                    vcc |= ((tmp & 0x1000) >> 6);
+                    vcc |= ((tmp & 0x4000) >> 7);
+
+                    /* GE */
+                    c = _mm_cmplt_epi16(b, _mm_setzero_si128());
+                    d = _mm_cmplt_epi16(_mm_setzero_si128(), _mm_sub_epi16(a, b));
+                    tmp = ~((uint32_t)_mm_movemask_epi8(_mm_or_si128(_mm_and_si128(mask, c), _mm_andnot_si128(mask, d))));
+                    vcc |= ((tmp & 0x0001) << 8);
+                    vcc |= ((tmp & 0x0004) << 7);
+                    vcc |= ((tmp & 0x0010) << 6);
+                    vcc |= ((tmp & 0x0040) << 5);
+                    vcc |= ((tmp & 0x0100) << 4);
+                    vcc |= ((tmp & 0x0400) << 3);
+                    vcc |= ((tmp & 0x1000) << 2);
+                    vcc |= ((tmp & 0x4000) << 1);
                     break;
                 case OP_CP2_VCH:
                     a = vregs[VS];
