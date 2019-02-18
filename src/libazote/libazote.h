@@ -420,6 +420,8 @@ typedef struct {
     AzVReg          vacc_hi;
     AzVReg          vacc_md;
     AzVReg          vacc_lo;
+    uint32_t        div_in;
+    uint32_t        div_out;
     uint16_t        vcc;
     uint16_t        vco;
     uint8_t         vce;

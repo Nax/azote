@@ -64,6 +64,24 @@ static __m128i vLoadE(__m128i* vregs, uint8_t r, uint8_t e)
     return _mm_setzero_si128();
 }
 
+static uint16_t vGetE(__m128i* vregs, uint8_t v, uint8_t e)
+{
+    AzVReg vtmp;
+
+    _mm_store_si128(&vtmp.vi, vregs[v]);
+    return vtmp.u16[7 - (e / 2)];
+}
+
+static void vSetE(__m128i* vregs, uint8_t v, uint8_t e, uint16_t value)
+{
+    __m128i a;
+    __m128i mask;
+
+    a = _mm_set1_epi16(value);
+    mask = _mm_cmpeq_epi16(_mm_set_epi16(0, 2, 4, 6, 8, 10, 12, 14), _mm_cvtsi32_si128(e));
+    vregs[v] = _mm_or_si128(_mm_and_si128(mask, a), _mm_andnot_si128(mask, vregs[v]));
+}
+
 static uint32_t _runCycles(AzState* state, uint32_t cycles)
 {
     uint32_t i;
@@ -74,6 +92,8 @@ static uint32_t _runCycles(AzState* state, uint32_t cycles)
     uint32_t tmp2;
     uint32_t regs[32];
     __m128i vregs[32];
+    uint32_t div_in;
+    uint32_t div_out;
     uint16_t vcc;
     uint16_t vco;
     uint8_t vce;
@@ -99,6 +119,8 @@ static uint32_t _runCycles(AzState* state, uint32_t cycles)
         vregs[i] = _mm_load_si128(&state->rsp.vregs->vi);
     
     /* Copy other regs */
+    div_in = state->rsp.div_in;
+    div_out = state->rsp.div_out;
     vcc = state->rsp.vcc;
     vco = state->rsp.vco;
     vce = state->rsp.vce;
@@ -702,7 +724,10 @@ static uint32_t _runCycles(AzState* state, uint32_t cycles)
                     TRAP;
                     break;
                 case OP_CP2_VRCPH:
-                    TRAP;
+                    tmp = vGetE(vregs, VT, E);
+                    div_in = tmp << 16;
+                    acc_lo = _mm_set1_epi16(tmp);
+                    vSetE(vregs, VD, DE, (div_out >> 16));
                     break;
                 case OP_CP2_VMOV:
                     TRAP;
@@ -872,6 +897,8 @@ end:
     _mm_store_si128(&state->rsp.vacc_lo.vi, acc_lo);
 
     /* Store other regs */
+    state->rsp.div_in = div_in;
+    state->rsp.div_out = div_out;
     state->rsp.vcc = vcc;
     state->rsp.vco = vco;
     state->rsp.vce = vce;

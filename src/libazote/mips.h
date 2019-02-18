@@ -269,6 +269,7 @@
 
 #define VT      RT
 #define VS      RD
+#define DE      VS
 #define VD      SA
 #define VE      ((op >> 7) & 0xf)
 #define VOFF    (op & 0x7f)
