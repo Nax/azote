@@ -481,7 +481,76 @@ static uint32_t _runCycles(AzState* state, uint32_t cycles)
                     TRAP;
                     break;
                 case OP_CP2_VCH:
-                    TRAP;
+                    a = vregs[VS];
+                    b = vLoadE(vregs, VT, E);
+                    c = _mm_sub_epi16(_mm_setzero_si128(), b);
+                    acc_lo = _mm_min_epi16(_mm_max_epi16(c, a), b);
+                    vregs[VD] = acc_lo;
+
+                    mask = _mm_cmplt_epi16(_mm_xor_si128(a, b), _mm_setzero_si128());
+
+                    vce = 0;
+                    vco = 0;
+                    vcc = 0;
+
+                    /* Start with VCE, it's 1 if a+b == 0xFFFF, 0 otherwise */
+                    tmp = (uint32_t)_mm_movemask_epi8(_mm_cmpeq_epi16(_mm_add_epi16(a, b), _mm_set1_epi16(0xffff)));
+                    vce |= ((tmp & 0x0001) >> 0);
+                    vce |= ((tmp & 0x0004) >> 1);
+                    vce |= ((tmp & 0x0010) >> 2);
+                    vce |= ((tmp & 0x0040) >> 3);
+                    vce |= ((tmp & 0x0100) >> 4);
+                    vce |= ((tmp & 0x0400) >> 5);
+                    vce |= ((tmp & 0x1000) >> 6);
+                    vce |= ((tmp & 0x4000) >> 7);
+
+                    /* Low 8 bits of VCO is sign equal */
+                    tmp = (uint32_t)_mm_movemask_epi8(_mm_xor_si128(a, b));
+                    vco |= ((tmp & 0x0002) >> 1);
+                    vco |= ((tmp & 0x0008) >> 2);
+                    vco |= ((tmp & 0x0020) >> 3);
+                    vco |= ((tmp & 0x0080) >> 4);
+                    vco |= ((tmp & 0x0200) >> 5);
+                    vco |= ((tmp & 0x0800) >> 6);
+                    vco |= ((tmp & 0x2000) >> 7);
+                    vco |= ((tmp & 0x8000) >> 8);
+
+                    /* High 8 bits of VCO is not equal */
+                    tmp = ~((uint32_t)_mm_movemask_epi8(_mm_or_si128(_mm_cmpeq_epi16(a, b), _mm_cmpeq_epi16(a, c))));
+                    vco |= ((tmp & 0x0001) << 8);
+                    vco |= ((tmp & 0x0004) << 7);
+                    vco |= ((tmp & 0x0010) << 6);
+                    vco |= ((tmp & 0x0040) << 5);
+                    vco |= ((tmp & 0x0100) << 4);
+                    vco |= ((tmp & 0x0400) << 3);
+                    vco |= ((tmp & 0x1000) << 2);
+                    vco |= ((tmp & 0x4000) << 1);
+
+                    /* LE */
+                    c = _mm_cmpgt_epi16(_mm_setzero_si128(), _mm_add_epi16(a, b));
+                    d = _mm_cmplt_epi16(b, _mm_setzero_si128());
+                    tmp = ~((uint32_t)_mm_movemask_epi8(_mm_or_si128(_mm_and_si128(mask, c), _mm_andnot_si128(mask, d))));
+                    vcc |= ((tmp & 0x0001) >> 0);
+                    vcc |= ((tmp & 0x0004) >> 1);
+                    vcc |= ((tmp & 0x0010) >> 2);
+                    vcc |= ((tmp & 0x0040) >> 3);
+                    vcc |= ((tmp & 0x0100) >> 4);
+                    vcc |= ((tmp & 0x0400) >> 5);
+                    vcc |= ((tmp & 0x1000) >> 6);
+                    vcc |= ((tmp & 0x4000) >> 7);
+
+                    /* GE */
+                    c = _mm_cmplt_epi16(b, _mm_setzero_si128());
+                    d = _mm_cmplt_epi16(_mm_setzero_si128(), _mm_sub_epi16(a, b));
+                    tmp = ~((uint32_t)_mm_movemask_epi8(_mm_or_si128(_mm_and_si128(mask, c), _mm_andnot_si128(mask, d))));
+                    vcc |= ((tmp & 0x0001) << 8);
+                    vcc |= ((tmp & 0x0004) << 7);
+                    vcc |= ((tmp & 0x0010) << 6);
+                    vcc |= ((tmp & 0x0040) << 5);
+                    vcc |= ((tmp & 0x0100) << 4);
+                    vcc |= ((tmp & 0x0400) << 3);
+                    vcc |= ((tmp & 0x1000) << 2);
+                    vcc |= ((tmp & 0x4000) << 1);
                     break;
                 case OP_CP2_VCR:
                     TRAP;
