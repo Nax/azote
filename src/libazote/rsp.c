@@ -402,7 +402,14 @@ static uint32_t _runCycles(AzState* state, uint32_t cycles)
                     TRAP;
                     break;
                 case OP_CP2_VMUDL:
-                    TRAP;
+                    a = vregs[VT];
+                    b = vLoadE(vregs, VS, E);
+                    hi = _mm_mulhi_epu16(a, b);
+                    lo = _mm_mullo_epi16(a, b);
+                    acc_md = _mm_cmplt_epi16(hi, _mm_setzero_si128());
+                    acc_lo = hi;
+                    /* TODO: Miss clamp */
+                    vregs[VD] = lo;
                     break;
                 case OP_CP2_VMUDM:
                     a = vregs[VT];
