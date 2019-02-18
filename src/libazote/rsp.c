@@ -74,6 +74,9 @@ static uint32_t _runCycles(AzState* state, uint32_t cycles)
     uint32_t tmp2;
     uint32_t regs[32];
     __m128i vregs[32];
+    uint16_t vcc;
+    uint16_t vco;
+    uint8_t vce;
     __m128i a;
     __m128i b;
     __m128i c;
@@ -94,6 +97,11 @@ static uint32_t _runCycles(AzState* state, uint32_t cycles)
     /* Copy vector regs */
     for (size_t i = 0; i < 32; ++i)
         vregs[i] = _mm_load_si128(&state->rsp.vregs->vi);
+    
+    /* Copy other regs */
+    vcc = state->rsp.vcc;
+    vco = state->rsp.vco;
+    vce = state->rsp.vce;
 
     /* Load PC */
     pc = state->rsp.pc;
@@ -674,6 +682,11 @@ end:
     _mm_store_si128(&state->rsp.vacc_hi.vi, acc_hi);
     _mm_store_si128(&state->rsp.vacc_md.vi, acc_md);
     _mm_store_si128(&state->rsp.vacc_lo.vi, acc_lo);
+
+    /* Store other regs */
+    state->rsp.vcc = vcc;
+    state->rsp.vco = vco;
+    state->rsp.vce = vce;
 
     /* Store PC */
     state->rsp.pc = pc;

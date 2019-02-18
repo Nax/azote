@@ -420,6 +420,9 @@ typedef struct {
     AzVReg          vacc_hi;
     AzVReg          vacc_md;
     AzVReg          vacc_lo;
+    uint16_t        vcc;
+    uint16_t        vco;
+    uint8_t         vce;
 } AzCoreRSP;
 
 struct AzCOP0_ {
